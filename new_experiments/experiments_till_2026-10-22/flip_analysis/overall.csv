@@ -1,0 +1,4 @@
+dataset,n,fixed,broken,kept wrong,both right,"kept wrong, same class","kept wrong, other class",net fixed,fixed %,broken %,kept wrong %,both right %,net %,fix rate % (of NoAdapt wrong),kept-wrong rate % (of NoAdapt wrong),break rate % (of NoAdapt right),NoAdapt acc %,Ramen acc %
+CIFAR-10-C,150000,25321,8531,32634,83514,18019,14615,16790,16.881,5.687,21.756,55.676,11.193,43.691,56.309,9.268,61.363,72.557
+CIFAR-100-C,150000,20230,6813,74145,48812,30316,43829,13417,13.487,4.542,49.43,32.541,8.945,21.436,78.564,12.248,37.083,46.028
+ImageNet-C,75000,7205,2864,47327,17604,18015,29312,4341,9.607,3.819,63.103,23.472,5.788,13.212,86.788,13.993,27.291,33.079

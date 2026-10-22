@@ -27,6 +27,12 @@ from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 from tqdm.auto import tqdm
 
+# Results pickled under numpy 2 (main server) reference numpy._core.*; numpy 1.x (this venv, torch 2.0.1) has numpy.core
+if int(np.__version__.split('.')[0]) < 2:  # not hasattr(np, '_core'): numpy 1.26 ships a stub that torch imports
+    import numpy.core.numeric, numpy.core.multiarray  # noqa: E401,F401
+    for _mod in [m for m in sys.modules if m == 'numpy.core' or m.startswith('numpy.core.')]:
+        sys.modules.setdefault('numpy._core' + _mod[len('numpy.core'):], sys.modules[_mod])
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'src'))
 
