@@ -1,0 +1,5 @@
+optimizer: signsgd
+lr: 0.000000001
+# Needs these to initialize the TTA method, they won't be used.
+
+templates: ["a centered satellite photo of {}."]

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .optimizer import get_optimizer_class
-from .clip_utils import encode_text
+from .clip_utils import encode_text, DEFAULT_TEMPLATES
 
 
 class BySampleLayerNorm(nn.Module):
@@ -197,15 +197,7 @@ class CLIPModelForBySampleTTA(ModelForBySampleTTA):
 
         # first generate text embeddings
         with torch.no_grad():
-            templates = [
-                "itap of a {}.",
-                "a bad photo of the {}.",
-                "a origami {}.",
-                "a photo of the large {}.",
-                "a {} in a video game.",
-                "art of the {}.",
-                "a photo of the small {}.",
-            ]
+            templates = cfg.get('templates') or DEFAULT_TEMPLATES
             self.text_feature = encode_text(model, class_names, templates)
 
         self.model = model.visual

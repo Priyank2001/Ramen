@@ -1,2 +1,27 @@
 .idea/
 **/__pycache__/
+.ipynb_checkpoints/
+
+# Experiment outputs (~10 GB of .pkl/.npy) — keep on disk, not in git
+new_experiments/results/
+*.pkl
+*.npy
+*.pt
+*.pth
+
+# Run logs and scratch files
+log/
+shell/output.txt
+shell/Untitled-1
+nohup.out
+wget-log
+
+# Third-party papers (not ours to redistribute)
+research_papers/
+blindqa.pdf
+
+# LaTeX build artifacts (keep .tex, .pdf, csv, figures)
+report/*.aux
+report/*.log
+report/*.out
+report/build.log

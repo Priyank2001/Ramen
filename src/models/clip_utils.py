@@ -3,6 +3,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 import clip
 
+# Prompt ensemble used unless the config sets `templates` (e.g. cfg/EuroSAT uses a satellite-photo prompt)
+DEFAULT_TEMPLATES = [
+    "itap of a {}.",
+    "a bad photo of the {}.",
+    "a origami {}.",
+    "a photo of the large {}.",
+    "a {} in a video game.",
+    "art of the {}.",
+    "a photo of the small {}.",
+]
+
 
 def encode_text(clip_model, class_names, templates, aggregate='average', return_text=False):
     all_texts = [[t.format(c.replace('_', ' ')) for t in templates] for c in class_names]

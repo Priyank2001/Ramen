@@ -1,0 +1,9 @@
+outcome,samples,% of stream
+fixed,25381.0,16.920666666666666
+broken,8498.0,5.665333333333333
+both right,83535.0,55.69
+"both wrong, disagree",14586.0,9.724
+"both wrong, agree",18000.0,12.0
+Ramen acc / ceiling,,72.61066666666667
+ceiling (zs or Ramen right),,78.276
+P(zs right | exactly one right),,25.083384987750524

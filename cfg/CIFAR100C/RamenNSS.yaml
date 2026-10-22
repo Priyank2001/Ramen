@@ -1,0 +1,27 @@
+max_capacity: 750
+topk: 5
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+# NSS feature-vector regulariser on the active-set selection, see src/methods/RamenNSS.py:
+# selection score = CLIP feature distance + nss_lambda * RMS distance of the normalised NSS vectors
+nss_features: both     # brisque (36) | niqe (36) | both (72)
+nss_norm: white        # white (running PCA whitening) | z (running per-feature z-score)
+nss_lambda: 0.0        # 0 = Ramen exactly
+
+# RamenQuality's scalar-score term (quality_active_set.md); off here
+quality_metric: both
+quality_reg: match
+quality_lambda: 0.0
+
+# class weighting of the active set, from src/methods/RamenActive.py (all = Ramen)
+active_set: all
+top_m: 5
+temperature: 1.0
+
+# per query, log the stream ids of this many highest-weight retrieved cache entries (for cache_viewer.py)
+log_support: 8
+# snapshot of the predicted class's queue per sample (CacheViewer); large when max_capacity is large
+log_queue: false

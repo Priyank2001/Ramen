@@ -1,0 +1,9 @@
+max_capacity: 750
+topk: 5
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+# which samples enter the memory, see src/methods/RamenCache.py: ramen | all_after | agree | adapted_label
+cache_strategy: ramen

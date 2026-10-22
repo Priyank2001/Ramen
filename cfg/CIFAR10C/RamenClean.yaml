@@ -1,0 +1,10 @@
+# contamination-aware weighting (methods/RamenFix.py); gamma: 0 + priority_dtype: float16 = Ramen
+max_capacity: 7500
+topk: 50
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+gamma: 1.0                 # alpha_ij <- alpha_ij * a_j ** gamma
+priority_dtype: float16    # float16 = Ramen (overflows after 65,520 samples); float32 = bug fix

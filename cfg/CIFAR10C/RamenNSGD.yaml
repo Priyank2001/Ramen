@@ -1,0 +1,9 @@
+# normalized SGD instead of SignSGD (methods/RamenFix.py)
+max_capacity: 7500
+topk: 50
+beta: 5.0
+
+optimizer: signsgd          # unused: RamenNSGD replaces it with SGD on the normalized gradient
+lr: 0.3                    # L2 step length; best of {0.01..1} on a 200/corruption subset
+
+match_sign_step: false     # true: lr_n = lr * sqrt(D) (same L2 step as SignSGD) -- diverges (CIFAR-10-C subset 39%)

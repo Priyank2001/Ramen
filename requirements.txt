@@ -1,0 +1,27 @@
+# Ramen TTA requirements — works on Python 3.9
+#
+# 1. Install torch + torchvision FIRST from PyTorch's index (see driver note below):
+#      pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121
+#    Use whl/cu118 instead if `nvidia-smi` shows driver < 525.
+#
+# 2. Then:
+#      pip install -r requirements.txt
+
+# OpenAI CLIP
+git+https://github.com/openai/CLIP.git
+ftfy
+regex
+
+numpy<2.1          # 2.1+ needs Python >=3.10
+pandas
+scipy
+scikit-learn
+matplotlib
+pillow
+PyYAML
+tqdm
+
+# notebook / experiments.py sweep runner
+ipykernel
+nbclient
+nbformat

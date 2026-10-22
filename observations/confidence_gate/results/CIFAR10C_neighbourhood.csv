@@ -1,0 +1,3 @@
+outcome,neighbours truly of zero-shot class %,neighbours truly of Ramen's class %,% where Ramen's class has more neighbours
+broken (zs class = true),38.86855730760179,20.071193221934575,27.724170393033653
+fixed (Ramen's class = true),17.533982112603915,37.78456325597888,71.79386154997833

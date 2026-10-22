@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from copy import deepcopy
 
 from .optimizer import get_optimizer_class
-from .clip_utils import encode_text
+from .clip_utils import encode_text, DEFAULT_TEMPLATES
 
 
 class ModelForTTA:
@@ -50,15 +50,7 @@ class CLIPModelForTTA(ModelForTTA):
 
         # first generate text embeddings
         with torch.no_grad():
-            templates = [
-                "itap of a {}.",
-                "a bad photo of the {}.",
-                "a origami {}.",
-                "a photo of the large {}.",
-                "a {} in a video game.",
-                "art of the {}.",
-                "a photo of the small {}.",
-            ]
+            templates = cfg.get('templates') or DEFAULT_TEMPLATES
             self.text_feature = encode_text(model, class_names, templates)
 
         num_classes, feat_dim = self.text_feature.shape

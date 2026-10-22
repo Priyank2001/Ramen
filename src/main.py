@@ -28,7 +28,7 @@ def single_domain_test(datasets, tta_model, args):
         num_correct, num_total = 0, 0
         for image, label in tqdm(dataloader):
             image, label = image.to(args.device), label.to(args.device)
-            logits = tta_model(image)
+            logits = tta_model(image, labels=label) if getattr(tta_model, 'records_labels', False) else tta_model(image)
 
             with torch.no_grad():
                 pred = torch.argmax(logits, dim=1)
@@ -59,7 +59,7 @@ def mixed_domain_test(datasets, tta_model, args):
 
         # image, label, mask = attack_model(image, label)
         # print(image.shape, label.shape)
-        logits = tta_model(image)
+        logits = tta_model(image, labels=label) if getattr(tta_model, 'records_labels', False) else tta_model(image)
         # logits = logits[mask]
 
         with torch.no_grad():

@@ -1,0 +1,17 @@
+max_capacity: 75
+topk: 1
+beta: 0.0
+
+optimizer: signsgd
+lr: 0.01
+
+# active-set policy, see src/methods/RamenPolicy.py:
+# per_class (per_class_n nearest from every class queue; n=1 == Ramen) | global_knn (global_k nearest of the whole
+# memory) | zs_prob (Ramen's active set, class queues weighted by softmax(zero-shot logits / temperature))
+policy: per_class
+per_class_n: 1
+global_k: 100
+temperature: 3.0
+
+# per query, log the stream ids of this many highest-weight retrieved cache entries
+log_support: 8

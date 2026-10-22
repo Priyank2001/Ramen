@@ -1,0 +1,22 @@
+max_capacity: 7500
+topk: 50
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+# image-quality regulariser on the active-set selection, see src/methods/RamenQuality.py:
+# selection score = CLIP feature distance + quality_lambda * R, with R over the stream ranks of the chosen metric(s)
+quality_metric: both   # niqe | brisque | both
+quality_reg: match     # match (entry's quality close to the query's) | prior (prefer entries with natural images)
+quality_lambda: 0.0    # 0 = Ramen exactly
+
+# class weighting of the active set, from src/methods/RamenActive.py (all = Ramen)
+active_set: all
+top_m: 5
+temperature: 1.0
+
+# per query, log the stream ids of this many highest-weight retrieved cache entries (for cache_viewer.py)
+log_support: 8
+# snapshot of the predicted class's queue per sample (CacheViewer); large when max_capacity is large
+log_queue: false

@@ -1,0 +1,4 @@
+optimizer: signsgd
+lr: 0.00002
+
+templates: ["a centered satellite photo of {}."]
