@@ -72,7 +72,7 @@ def write_metrics(results_dir, run_id, script, config, metrics, baseline_run_id=
         "machine": tag,
         "gpu": gpu_name() if gpu == "auto" else gpu,
         "git_hash": _git("rev-parse", "--short", "HEAD") if git_hash == "auto" else git_hash,
-        "git_dirty": bool(_git("status", "--porcelain")) if git_hash == "auto" else None,
+        "git_dirty": bool(_git("status", "--porcelain", "--untracked-files=no")) if git_hash == "auto" else None,  # tracked code only; untracked results don't make code dirty
         "backfilled": backfilled,
         "script": os.path.relpath(os.path.abspath(script), REPO),
         "config": config,

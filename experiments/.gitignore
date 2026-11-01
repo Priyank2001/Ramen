@@ -6,3 +6,5 @@
 *.pth
 *.log
 **/results/**/records/
+# Subset sanity checks (not citable runs)
+**/results/check/
