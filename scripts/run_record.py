@@ -58,8 +58,9 @@ def domain_metrics(df, domain_col="domain"):
 
 
 def write_metrics(results_dir, run_id, script, config, metrics, baseline_run_id=None, raw_outputs=(),
-                  backfilled=False, gpu="auto", git_hash="auto", notes=None):
-    """Write <results_dir>/<run_id>/metrics.json and return its path."""
+                  backfilled=False, gpu="auto", git_hash="auto", notes=None, extra=None):
+    """Write <results_dir>/<run_id>/metrics.json and return its path. `extra`: more top-level sections (e.g.
+    "resources"); they may not overwrite the schema's own keys."""
     tag = machine_tag()
     if not run_id.startswith(tag + "_"):
         raise ValueError(f"run_id must start with the machine tag '{tag}_' (D9): {run_id}")
@@ -81,6 +82,10 @@ def write_metrics(results_dir, run_id, script, config, metrics, baseline_run_id=
     }
     if notes:
         rec["notes"] = notes
+    for key, value in (extra or {}).items():
+        if key in rec:
+            raise ValueError(f"extra key {key!r} would overwrite a metrics.json field")
+        rec[key] = value
     path = out / "metrics.json"
     path.write_text(json.dumps(rec, indent=2, default=float) + "\n")
     return path

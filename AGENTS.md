@@ -151,7 +151,7 @@ The **repo folder is the only place agents may change**. Everything outside it i
 - `pc2_lab` items:
   - [x] Branch from upstream `ef0fdc7`; tooling ported; review scope = `ramen_lab/` + `experiments/**/*.py`
   - [x] Upstream frozen: guard denies edits, and `tests/test_upstream_untouched.py` passes
-  - [ ] `ramen_lab` core (runner, memory guard, run records): plan in `docs/plans/week01_baseline.md`
+  - [x] `ramen_lab` core (runner, memory guard, run records, launcher); tests `tests/test_lab_*.py`
   - [ ] Week 01: fixed batch per dataset, then Ramen + NoAdapt seeds 0–4 and the noise floor (CIFAR-10-C first)
   - [ ] `loginctl enable-linger` (user's call): enables the hard cgroup RAM cap for detached jobs (D17)
 - Setup items carried over from `sec_server_dual_agent`:

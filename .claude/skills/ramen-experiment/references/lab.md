@@ -73,7 +73,7 @@ The dependency direction is `experiments/*` → `ramen_lab` → `ramen_lab.upstr
 
 | key | backbone (default) | stream | classes | upstream cfg (`cfg/<key>/Ramen.yaml`) | fixed batch |
 |---|---|---|---|---|---|
-| `CIFAR10C` (sev. 5) | `clip_vitbase32` | 15 × 10,000 | 10 | max_capacity 7500, topk 50, beta 5.0, signsgd lr 0.01 | **TBD** |
+| `CIFAR10C` (sev. 5) | `clip_vitbase32` | 15 × 10,000 | 10 | max_capacity 7500, topk 50, beta 5.0, signsgd lr 0.01 | **100** (= paper; 9.18 GB peak on the 2080 Ti; RAM budget 8.2 GB) |
 | `CIFAR100C` (sev. 5) | `clip_vitbase16` | 15 × 10,000 | 100 | 750, 5, 5.0, signsgd 0.01 | **TBD** |
 | `ImageNetC5K` (sev. 5) | `clip_vitbase16` (paper: L/14, doesn't fit) | 15 × 5,000 | 1000 | 75, 1, 0.0, signsgd 0.01 | **TBD** |
 | `DomainNet` | `clip_vitbase32` | 6 domains, 586,575 | 345 | 300, 10, 5.0, signsgd 0.01 | **TBD** |
