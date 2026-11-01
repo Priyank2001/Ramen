@@ -10,8 +10,10 @@ Commands (PC2; prefix with the RAMEN_ENV python and PYTHONNOUSERSITE=1 CUDA_DEVI
     CUDA_VISIBLE_DEVICES=0 python baseline.py check CIFAR10C [--batch B]
         200 images per domain: NoAdapt seeds 0 and 1 must agree on every prediction (a seed changes only the order),
         and Ramen seed 0 run twice must agree on every prediction (determinism).
-    python -m ramen_lab.launch --gpu 0 --log results/logs/gpu0.log -- baseline.py run CIFAR10C --seeds 0,2,4
-    python -m ramen_lab.launch --gpu 1 --log results/logs/gpu1.log -- baseline.py run CIFAR10C --seeds 1,3
+    PYTHONPATH=<repo root> python -m ramen_lab.launch --gpu 0 --ram-gb 8.2 --log results/logs/gpu0.log \
+        -- baseline.py run CIFAR10C --seeds 0,2,4
+    PYTHONPATH=<repo root> python -m ramen_lab.launch --gpu 1 --ram-gb 8.2 --log results/logs/gpu1.log \
+        -- baseline.py run CIFAR10C --seeds 1,3
         Full stream at the frozen batch: NoAdapt for the first seed listed, then Ramen for every seed. Seeds are tied to
         GPUs (0, 2, 4 -> GPU 0; 1, 3 -> GPU 1) so later variants can be paired with a baseline on the same GPU model.
 """
