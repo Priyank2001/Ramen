@@ -1,0 +1,6 @@
+{
+  "context": { "fileName": ["GEMINI.md"] },
+  "tools": {
+    "exclude": ["write_file", "replace", "run_shell_command", "web_fetch", "google_web_search", "invoke_agent"]
+  }
+}

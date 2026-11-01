@@ -1,0 +1,8 @@
+# Raw outputs stay local (AGENTS.md §10). Commit only code, notebooks, metrics.json and small figures.
+*.pkl
+*.npy
+*.npz
+*.pt
+*.pth
+*.log
+**/results/**/records/
