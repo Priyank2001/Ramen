@@ -1,0 +1,16 @@
+{
+  "dataset": "CIFAR10C",
+  "gpu": "NVIDIA GeForce RTX 2080 Ti",
+  "chosen_batch": 100,
+  "suggested_ram_budget_gb": 8.2,
+  "tried": [
+    {
+      "batch": 100,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": true,
+      "peak_gpu_gb": 9.18,
+      "peak_ram_gb": 5.48
+    }
+  ]
+}

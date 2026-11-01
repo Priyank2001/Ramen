@@ -1,6 +1,6 @@
 # Plan: week 01: `ramen_lab` core + Ramen baseline and noise floor at a fixed batch
 
-*2026-11-01. Status: draft, waiting for the user's go-ahead. Core-code task (new package `ramen_lab/`, tests), full loop of AGENTS.md §6. No upstream file changes (D18).*
+*2026-11-01. Status: `ramen_lab` core built, 18 tests pass. CIFAR-10-C batch frozen at 100 (fits the 2080 Ti with memory full: 9.18 of 10.76 GB). Subset checks pass (NoAdapt seed-independent, Ramen deterministic). Full CIFAR-10-C runs are next. Core-code task (new package `ramen_lab/`, tests), full loop of AGENTS.md §6. No upstream file changes (D18).*
 
 ## Question
 
