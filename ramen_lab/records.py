@@ -7,7 +7,7 @@ DomainNet: about 17 MB). Optional per-class probabilities go to a disk-backed fp
 """
 import importlib.util
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -86,11 +86,13 @@ def load_records(run_dir: Path) -> Dict[str, np.ndarray]:
 
 def write_metrics(results_dir: Path, run_id: str, script: str, config: Dict, metrics: Dict, resources: Dict,
                   baseline_run_id: Optional[str] = None, raw_outputs: Sequence[Path] = (),
-                  notes: Optional[str] = None) -> Path:
-    """metrics.json with the AGENTS.md schema plus `resources` (peak RAM / GPU, minutes)."""
+                  notes: Optional[str] = None, git: Optional[Tuple[str, bool]] = None) -> Path:
+    """metrics.json with the AGENTS.md schema plus `resources` (peak RAM / GPU, minutes). `git`: (hash, dirty) captured
+    when the run started; None reads them now."""
+    git_hash, git_dirty = git if git is not None else ("auto", None)
     return run_record.write_metrics(results_dir, run_id, script, config=config, metrics=metrics,
-                                    baseline_run_id=baseline_run_id, raw_outputs=list(raw_outputs),
-                                    notes=notes, extra={"resources": resources})
+                                    baseline_run_id=baseline_run_id, raw_outputs=list(raw_outputs), notes=notes,
+                                    extra={"resources": resources}, git_hash=git_hash, git_dirty=git_dirty)
 
 
 def find_runs(results_dir: Path) -> List[Path]:

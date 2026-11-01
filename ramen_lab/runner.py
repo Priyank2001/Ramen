@@ -23,6 +23,11 @@ from ramen_lab.resources import GB, MemoryExceeded, MemoryGuard, ResourceBudget
 from ramen_lab.stream import StreamFactory
 
 
+def _as_json(value: Any) -> Any:
+    """What `value` looks like after a round trip through metrics.json (tuples become lists, and so on)."""
+    return json.loads(json.dumps(value))
+
+
 @dataclass(frozen=True)
 class RunResult:
     run_id: str
@@ -49,12 +54,16 @@ class Runner:
         self.machine = run_record.machine_tag()
 
     # ------------------------------------------------------------------ building
+    def method_config(self, config: RunConfig) -> Dict[str, Any]:
+        """The upstream yaml for (dataset, method) with the config's overrides merged on top."""
+        return {**self.adapter.load_method_config(config.dataset, config.method), **dict(config.overrides)}
+
     def build(self, config: RunConfig):
         """A fresh model, the datasets and the method for this config (nothing is shared between runs)."""
         self.adapter.seed_everything(config.seed)
         model, preprocess = self.adapter.load_model(config.resolved_backbone, self.device)
         datasets = self.adapter.load_datasets(config.dataset, config.data_root, preprocess)
-        method_cfg = {**self.adapter.load_method_config(config.dataset, config.method), **dict(config.overrides)}
+        method_cfg = self.method_config(config)
         args = self.adapter.method_args(method_cfg, self.device, config.resolved_batch_size)
         method = self.methods.get(config.method)(model, datasets, args)
         return method, datasets, method_cfg
@@ -66,11 +75,12 @@ class Runner:
         run_dir = self.results_dir / run_id
         if (run_dir / "metrics.json").exists() and not overwrite:
             rec = json.loads((run_dir / "metrics.json").read_text())
-            stored = {k: v for k, v in rec["config"].items() if k != "method_config"}
-            if stored != json.loads(json.dumps(config.to_dict())):
+            expected = _as_json({**config.to_dict(), "method_config": self.method_config(config)})
+            if rec["config"] != expected:
                 raise ValueError(f"{run_id} exists with a different config; give the variant a new `name`")
             return RunResult(run_id, run_dir, rec["metrics"], rec.get("resources", {}), skipped=True)
 
+        git = run_record.git_state()  # the code this run starts from; HEAD may move before it ends
         method, datasets, method_cfg = self.build(config)
         streams = StreamFactory(config.resolved_batch_size, config.seed, config.num_workers, config.n_per_domain)
         loaders = [streams.mixed(datasets)] if config.tta_mode == "mixed" else streams.single(datasets)
@@ -96,7 +106,7 @@ class Runner:
         records = writer.save()
         write_metrics(self.results_dir, run_id, self.script,
                       config={**config.to_dict(), "method_config": method_cfg}, metrics=metrics, resources=resources,
-                      baseline_run_id=baseline_run_id, raw_outputs=[records], notes=notes)
+                      baseline_run_id=baseline_run_id, raw_outputs=[records], notes=notes, git=git)
         return RunResult(run_id, run_dir, metrics, resources)
 
     def _adapt(self, method, loader, writer: RecordWriter, guard: MemoryGuard, desc: str) -> None:
