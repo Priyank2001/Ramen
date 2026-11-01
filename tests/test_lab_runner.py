@@ -95,9 +95,15 @@ def test_ramen_restores_weights_and_reset_empties_memory():
     before = {k: v.clone() for k, v in ramen.model.model.state_dict().items()}
     trainable = {n for n, p in ramen.model.model.named_parameters() if p.requires_grad}
     assert trainable and all("weight_by_sample" in n or "bias_by_sample" in n for n in trainable)
+    adapted = []
     for image, *_ in StreamFactory(B, 0, 0).mixed(FAKE):
-        ramen(image.to(DEVICE))
+        image = image.to(DEVICE)
+        with torch.no_grad():
+            zero_shot = ramen.model(image)  # base weights: what Ramen would output without adapting
+        adapted.append(not torch.equal(ramen(image), zero_shot))
+        # Ramen is episodic per batch (Ramen.py:157-168): step, predict, then reset to the base weights
         assert all(torch.equal(before[k], v) for k, v in ramen.model.model.state_dict().items())
+    assert all(adapted), "Ramen's output equals zero-shot: no adaptation happened, so the restore check is vacuous"
     assert any(c.size for c in ramen.cache)
     ramen.reset()
     assert not any(c.size for c in ramen.cache) and ramen.counter == 0
@@ -142,3 +148,6 @@ def test_finished_run_is_skipped_and_changed_config_refused(tmp_path):
     assert again.skipped and again.metrics == first.metrics
     with pytest.raises(ValueError, match="different config"):
         runner(tmp_path).run(config(method="NoAdapt", overrides={"x": 1}))
+    changed_yaml = SimpleNamespace(**{**vars(ADAPTER), "load_method_config": lambda d, a: {"optimizer": "sgd", "lr": 1.0}})
+    with pytest.raises(ValueError, match="different config"):
+        Runner(tmp_path, script=__file__, adapter=changed_yaml, device=DEVICE).run(config(method="NoAdapt"))

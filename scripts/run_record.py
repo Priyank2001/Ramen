@@ -57,10 +57,16 @@ def domain_metrics(df, domain_col="domain"):
     }
 
 
+def git_state():
+    """(short HEAD hash, True if tracked files differ from HEAD). Untracked results don't make code dirty."""
+    return _git("rev-parse", "--short", "HEAD"), bool(_git("status", "--porcelain", "--untracked-files=no"))
+
+
 def write_metrics(results_dir, run_id, script, config, metrics, baseline_run_id=None, raw_outputs=(),
-                  backfilled=False, gpu="auto", git_hash="auto", notes=None, extra=None):
+                  backfilled=False, gpu="auto", git_hash="auto", notes=None, extra=None, git_dirty=None):
     """Write <results_dir>/<run_id>/metrics.json and return its path. `extra`: more top-level sections (e.g.
-    "resources"); they may not overwrite the schema's own keys."""
+    "resources"); they may not overwrite the schema's own keys. Pass git_hash and git_dirty explicitly to record the
+    code a run STARTED from (HEAD can move while a long run is going); "auto" reads them now."""
     tag = machine_tag()
     if not run_id.startswith(tag + "_"):
         raise ValueError(f"run_id must start with the machine tag '{tag}_' (D9): {run_id}")
@@ -71,8 +77,8 @@ def write_metrics(results_dir, run_id, script, config, metrics, baseline_run_id=
         "date": date.today().isoformat(),
         "machine": tag,
         "gpu": gpu_name() if gpu == "auto" else gpu,
-        "git_hash": _git("rev-parse", "--short", "HEAD") if git_hash == "auto" else git_hash,
-        "git_dirty": bool(_git("status", "--porcelain", "--untracked-files=no")) if git_hash == "auto" else None,  # tracked code only; untracked results don't make code dirty
+        "git_hash": git_state()[0] if git_hash == "auto" else git_hash,
+        "git_dirty": git_state()[1] if git_hash == "auto" else git_dirty,
         "backfilled": backfilled,
         "script": os.path.relpath(os.path.abspath(script), REPO),
         "config": config,
