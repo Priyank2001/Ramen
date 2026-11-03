@@ -104,6 +104,9 @@ def test_ramen_restores_weights_and_reset_empties_memory():
         # Ramen is episodic per batch (Ramen.py:157-168): step, predict, then reset to the base weights
         assert all(torch.equal(before[k], v) for k, v in ramen.model.model.state_dict().items())
     assert all(adapted), "Ramen's output equals zero-shot: no adaptation happened, so the restore check is vacuous"
+    # Episodic independence also needs a state-free optimizer (ModelForBySampleTTA.py:240); reset_parameters
+    # does not clear optimizer buffers, so any momentum would leak across batches.
+    assert not ramen.model.optimizer.state and ramen.model.optimizer.param_groups[0]["momentum"] == 0.0
     assert any(c.size for c in ramen.cache)
     ramen.reset()
     assert not any(c.size for c in ramen.cache) and ramen.counter == 0
