@@ -22,7 +22,7 @@ import gc
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -146,6 +146,120 @@ def load_runs(dataset: str) -> Dict[str, Dict[int, dict]]:
         if rec["config"]["n_per_domain"] is None and rec["config"]["method"] in runs:
             runs[rec["config"]["method"]][rec["config"]["seed"]] = rec
     return runs
+
+
+# Paper, arXiv 2604.21728 (docs/papers/pdf/ramen_2604.21728.pdf), ViT-B/32 on CIFAR-10-C, batch 100, mixture of
+# 15 corruptions. Table 1: per corruption and average; "Ensemble" = zero-shot CLIP with the 7-template prompt
+# ensemble, which is what upstream NoAdapt computes. Table 5: Ramen's average with its s.d.
+PAPER_C10 = {
+    "corruptions": ["gaussian_noise", "shot_noise", "impulse_noise", "defocus_blur", "glass_blur", "motion_blur",
+                    "zoom_blur", "snow", "frost", "fog", "brightness", "contrast", "elastic_transform", "pixelate",
+                    "jpeg_compression"],
+    "Ramen": [61.0, 63.3, 56.0, 77.2, 64.1, 77.2, 78.9, 80.9, 80.3, 78.0, 88.1, 79.8, 72.0, 65.5, 67.5],
+    "Ramen_avg": 72.7, "Ramen_avg_sd": 0.1, "Ensemble_avg": 61.3,
+}
+
+
+def seed_table(dataset: str):
+    """One row per run: method, seed, GPU, accuracy (mean over corruptions), images, minutes, peak RAM / GPU."""
+    import pandas as pd
+    rows = []
+    for method, by_seed in load_runs(dataset).items():
+        for seed, rec in sorted(by_seed.items()):
+            m, r = rec["metrics"], rec["resources"]
+            rows.append({"method": method, "seed": seed, "gpu": rec["gpu"], "acc": m["acc"], "acc_micro": m["acc_micro"],
+                         "images": m["n_samples"], "correct": m["n_correct"], "minutes": r["minutes"],
+                         "peak_ram_gb": r["peak_ram_gb"], "ram_budget_gb": r["ram_budget_gb"],
+                         "peak_gpu_reserved_gb": r["peak_gpu_reserved_gb"]})
+    return pd.DataFrame(rows)
+
+
+def per_corruption(dataset: str):
+    """Per corruption: NoAdapt (seed 0), Ramen mean / min / max over seeds, the paper's Ramen, and the gaps."""
+    import pandas as pd
+    runs = load_runs(dataset)
+    ramen = pd.DataFrame({s: r["metrics"]["per_domain"] for s, r in runs["Ramen"].items()})
+    table = pd.DataFrame({"NoAdapt": pd.Series(runs["NoAdapt"][min(runs["NoAdapt"])]["metrics"]["per_domain"]),
+                          "Ramen mean": ramen.mean(axis=1), "Ramen min": ramen.min(axis=1),
+                          "Ramen max": ramen.max(axis=1)})
+    table["seed range"] = table["Ramen max"] - table["Ramen min"]
+    if dataset == "CIFAR10C":
+        table["paper Ramen"] = pd.Series(PAPER_C10["Ramen"], index=PAPER_C10["corruptions"])
+        table["ours - paper"] = table["Ramen mean"] - table["paper Ramen"]
+    table["Ramen - NoAdapt"] = table["Ramen mean"] - table["NoAdapt"]
+    return table.loc[PAPER_C10["corruptions"]] if dataset == "CIFAR10C" else table
+
+
+def paired_records(dataset: str, seed: int = 0):
+    """NoAdapt and Ramen per-image records for one seed (same GPU and stream order, so rows line up)."""
+    runs = load_runs(dataset)
+    a = load_records(RESULTS / runs["NoAdapt"][seed]["run_id"])
+    b = load_records(RESULTS / runs["Ramen"][seed]["run_id"])
+    assert runs["NoAdapt"][seed]["gpu"] == runs["Ramen"][seed]["gpu"], "per-image pairs need the same GPU model"
+    assert np.array_equal(a["sample_idx"], b["sample_idx"]) and np.array_equal(a["domain_idx"], b["domain_idx"])
+    return a, b
+
+
+def over_stream(dataset: str, seed: int = 0, n_bins: int = 15):
+    """Accuracy of NoAdapt and Ramen per stream bin (cold memory at the start)."""
+    import pandas as pd
+    a, b = paired_records(dataset, seed)
+    bins = np.array_split(np.arange(len(a["label"])), n_bins)
+    acc = lambda r, idx: 100 * float((r["pred"][idx] == r["label"][idx]).mean())
+    return pd.DataFrame({"start": [int(i[0]) for i in bins], "end": [int(i[-1]) + 1 for i in bins],
+                         "NoAdapt": [acc(a, i) for i in bins], "Ramen": [acc(b, i) for i in bins]})
+
+
+def check_agreement(method: str, dir_a: str, dir_b: str, seeds: Tuple[int, int]) -> Tuple[int, int]:
+    """Subset check runs (results/check): predictions identical per image between two runs, (identical, total)."""
+    spec = DATASETS["CIFAR10C"]
+    by_image = lambda r: r["pred"][np.lexsort((r["sample_idx"], r["domain_idx"]))]
+    run = lambda d, s: load_records(RESULTS / "check" / d / f"pc2_{spec.short}_{method}_b{spec.batch_size}_s{s}_n{CHECK_N_PER_DOMAIN}")
+    a, b = by_image(run(dir_a, seeds[0])), by_image(run(dir_b, seeds[1]))
+    return int((a == b).sum()), len(a)
+
+
+def full_noadapt_agreement(dataset: str) -> Tuple[int, int]:
+    """NoAdapt seed 0 vs seed 1 on the full stream, per image (these two ran on different GPU models)."""
+    runs = load_runs(dataset)["NoAdapt"]
+    by_image = lambda r: r["pred"][np.lexsort((r["sample_idx"], r["domain_idx"]))]
+    a, b = (by_image(load_records(RESULTS / runs[s]["run_id"])) for s in (0, 1))
+    return int((a == b).sum()), len(a)
+
+
+def plot_paper_gap(table, sd: float):
+    """Dot per corruption: our Ramen mean minus the paper's, with our seed range as a bar and the paper's s.d."""
+    import matplotlib.pyplot as plt
+    from ramen_lab.analysis.plots import color
+    t = table.sort_values("ours - paper")
+    fig, ax = plt.subplots(figsize=(6.5, 4.6))
+    y = np.arange(len(t))
+    ax.hlines(y, t["Ramen min"] - t["paper Ramen"], t["Ramen max"] - t["paper Ramen"], color=color("Ramen"), alpha=0.35, lw=3)
+    ax.scatter(t["ours - paper"], y, color=color("Ramen"), zorder=3, s=30)
+    ax.axvline(0, color="#555555", lw=1)
+    ax.axvspan(-sd, sd, color="#999999", alpha=0.12, label=f"paper's s.d. of the average ({sd})")
+    ax.set_yticks(y, t.index)
+    ax.set_xlabel("our Ramen minus the paper's Ramen (pts); bar = range over our seeds 0-4")
+    ax.set_title("Every corruption within 0.21 pts of the paper's Table 1")
+    ax.legend(loc="lower right", fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def plot_over_stream(df):
+    """Accuracy per stream bin for NoAdapt and Ramen (seed 0): does Ramen start cold?"""
+    import matplotlib.pyplot as plt
+    from ramen_lab.analysis.plots import color
+    x = (df.start + df.end) / 2 / 1000
+    fig, ax = plt.subplots(figsize=(6.5, 3.0))
+    for name in ("Ramen", "NoAdapt"):
+        ax.plot(x, df[name], marker="o", ms=3, color=color(name), label=name)
+    ax.set_xlabel("stream position (x1,000 images)")
+    ax.set_ylabel("accuracy in the bin (%)")
+    ax.set_title("Ramen's gain over NoAdapt is smaller in the first 10,000 images")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    return fig
 
 
 def main(argv: Optional[List[str]] = None) -> None:

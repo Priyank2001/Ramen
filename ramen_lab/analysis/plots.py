@@ -29,8 +29,9 @@ def seed_accuracies(accs: Mapping[str, Sequence[float]], seeds: Sequence[int], t
         values = np.asarray(values, dtype=float)
         ax.scatter(values, np.full(len(values), row), s=45, color=color(name), zorder=3, edgecolor="white")
         ax.plot([values.mean()] * 2, [row - 0.25, row + 0.25], color=color(name), lw=2)
-        for s, v in zip(seeds, values):
-            ax.annotate(f"s{s}", (v, row), xytext=(0, 7), textcoords="offset points", ha="center", fontsize=7)
+        for rank, i in enumerate(np.argsort(values)):  # alternate above / below, so near-equal seeds stay readable
+            ax.annotate(f"s{seeds[i]}", (values[i], row), xytext=(0, 7 if rank % 2 == 0 else -13),
+                        textcoords="offset points", ha="center", fontsize=7)
         ax.annotate(f"mean {values.mean():.2f}", (values.max(), row), xytext=(12, -3), textcoords="offset points",
                     fontsize=8, color=color(name))
         if floor is not None and row == 0:

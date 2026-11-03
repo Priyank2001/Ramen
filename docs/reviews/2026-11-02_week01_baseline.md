@@ -53,3 +53,39 @@ Not raised by Gemini, found while responding: `metrics.json` recorded the git HE
 during the first baseline runs (launched at `ee5a729`, recorded `5c19267`). `git diff ee5a729 5c19267` touches only
 the usage docstring in `baseline.py`, `git_dirty`'s definition and `experiments/.gitignore`, so no computation. Fixed
 in `fd79ee7`/`4e61128`: provenance is captured at run start.
+
+---
+
+# Round 2
+
+- Diff: `reviewed/week01_baseline...3888551`
+
+## Gemini findings (round 2)
+
+Building on the research into the `Ramen` implementation and the `Runner` logic, here is the review of the `week01_baseline` task. The review focuses on the TTA checklist (AGENTS.md §7) and the integrity of the new experiment harness.
+
+### Review Findings
+
+| ID | severity | file:line or cell | claim | evidence | how to check |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **R1** | **risk** | `src/methods/Ramen.py:171` | Optimizer state (e.g. momentum) is not reset between batches, potentially violating episodic independence if `momentum > 0`. | `Ramen.py` calls `self.model.reset_parameters()` which restores weights but not optimizer buffers; `TTABase`'s `load_model_and_optimizer` is unused. | Add a test in `tests/test_lab_runner.py` that uses an optimizer with momentum and checks if `ramen.model.optimizer.state` is non-empty/non-zero after a batch. |
+| **C1** | verified | `ramen_lab/runner.py:84` | Git state is captured at the start of a run, ensuring `metrics.json` reflects the code state even if HEAD moves during long runs. | `run_record.git_state()` is called before `self.build` and the adaptation loop. | [verified] |
+| **C2** | verified | `tests/test_lab_runner.py:101-103` | Tests now explicitly verify that adaptation occurred by comparing against zero-shot output, preventing vacuous success of the restore check. | New `adapted.append(...)` and `assert all(adapted)` logic in `test_ramen_restores_weights_and_reset_empties_memory`. | [verified] |
+| **C3** | verified | `ramen_lab/runner.py:79-82` | Run config integrity is enforced; changing the underlying YAML or overrides for an existing `run_id` triggers a refusal. | `rec["config"] != expected` check in `Runner.run` and the new test case in `tests/test_lab_runner.py:149-152`. | [verified] |
+| **N1** | nit | `scripts/run_record.py:61-62` | `git_state()` is called twice per `write_metrics` call if `git_hash="auto"`. | In `write_metrics`, both `git_hash` and `git_dirty` call `git_state()` independently if using the "auto" default. | Consolidate to a single call if efficiency becomes an issue. |
+
+### Technical Summary
+The changes successfully implement the requirement for trustworthy, reproducible experiments by:
+1. **Capturing Code State**: Moving git state capture to the start of the run (`runner.py:84`) ensures that if a user edits code while an experiment is running, the `metrics.json` remains a faithful record of the *starting* code.
+2. **Strict Config Matching**: Including the full `method_config` (resolved from YAML + overrides) in the skip-check ensures that "invisible" changes to configuration files are detected, preventing accidental reuse of stale results.
+3. **Improved Test Rigor**: The new check in `test_lab_runner.py` ensures that the "weight restoration" test is meaningful by first proving that the weights *did* deviate from their zero-shot initialization.
+
+**Note on R1**: While the current `Ramen.yaml` uses `signsgd` with no momentum (stateless), the risk remains that switching to a stateful optimizer (like Adam or SGD with momentum) would leak information across batches, violating the episodic nature of the method. Using the `TTABase` state restoration tools would be a safer long-term approach.
+
+## Responses (Claude) (round 2)
+
+For each finding ID: **Fix**: what changed (commit), or **Rebut**: evidence (test output, metrics.json, paper section, file:line).
+
+- **R1: Rebut + Fix (test only).** The premise doesn't hold for Ramen's config: `cfg/CIFAR10C/Ramen.yaml` sets `optimizer: signsgd`, `lr: 0.01` and no momentum, and `SignSGD.__init__` defaults `momentum=0.0` (`src/models/optimizer.py:30`), so its `step` creates no buffers. Upstream also states the requirement: `ModelForBySampleTTA.py:240` ("The optimizer has to be a state-free one"). Nothing leaks across batches in any run we have. Gemini's suggested test is a useful guard for a future variant that overrides `optimizer`, so `test_ramen_restores_weights_and_reset_empties_memory` now asserts `optimizer.state` is empty after the batches and `momentum == 0.0` (`tests/test_lab_runner.py`, 24 tests pass).
+- **C1, C2, C3: verified** by Gemini; no action.
+- **N1: Rebut.** `git_state()` is in `scripts/run_record.py`, called once per `write_metrics`; the double call only happens with `git_hash="auto"`, which `ramen_lab` never passes (it captures the state at run start, `runner.py:84`). It costs two `git` subprocess calls per run, so nothing to change.
