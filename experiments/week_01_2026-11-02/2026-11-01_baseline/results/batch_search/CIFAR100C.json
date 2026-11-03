@@ -1,0 +1,48 @@
+{
+  "dataset": "CIFAR100C",
+  "gpu": "NVIDIA GeForce RTX 2080 Ti",
+  "chosen_batch": 32,
+  "suggested_ram_budget_gb": 9.8,
+  "tried": [
+    {
+      "batch": 100,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": false,
+      "peak_gpu_gb": null,
+      "oom": true
+    },
+    {
+      "batch": 64,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": false,
+      "peak_gpu_gb": null,
+      "oom": true
+    },
+    {
+      "batch": 50,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": false,
+      "peak_gpu_gb": null,
+      "oom": true
+    },
+    {
+      "batch": 48,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": false,
+      "peak_gpu_gb": null,
+      "oom": true
+    },
+    {
+      "batch": 32,
+      "gpu_total_gb": 10.76,
+      "memory_entries": 75000,
+      "fits": true,
+      "peak_gpu_gb": 9.63,
+      "peak_ram_gb": 6.51
+    }
+  ]
+}

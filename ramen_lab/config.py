@@ -25,9 +25,13 @@ class DatasetSpec:
 DATASETS: Dict[str, DatasetSpec] = {spec.name: spec for spec in (
     # 2026-11-01 batch search on the 2080 Ti, memory full: peak 9.18 of 10.76 GB GPU, 5.48 GB RAM (4 workers)
     DatasetSpec("CIFAR10C", "C10", "clip_vitbase32", batch_size=100, ram_budget_gb=8.2),
-    DatasetSpec("CIFAR100C", "C100", "clip_vitbase16", batch_size=None, ram_budget_gb=24.0),
-    DatasetSpec("ImageNetC5K", "INC", "clip_vitbase16", batch_size=None, ram_budget_gb=24.0),
-    DatasetSpec("DomainNet", "DN", "clip_vitbase32", batch_size=None, ram_budget_gb=24.0),
+    # 2026-11-04 batch search, same method (candidates 100, 64, 50, 48, 32, 24; fits = peak <= 95% of the 10.76 GB):
+    # CIFAR-100-C: 100/64/50/48 OOM, 32 fits (9.63 GB GPU, 6.51 GB RAM). ImageNet-C: 32 does not fit (10.49 GB),
+    # 24 fits (9.81 GB, 4.00 GB RAM). DomainNet: 50 and 48 do not fit (10.62, 10.63 GB), 32 fits (10.18 GB, 4.46 GB RAM).
+    # RAM budget = 2 x the search peak (the 1.5 x used for CIFAR-10-C left little margin: full run 7.3 of 8.2 GB).
+    DatasetSpec("CIFAR100C", "C100", "clip_vitbase16", batch_size=32, ram_budget_gb=13.0),
+    DatasetSpec("ImageNetC5K", "INC", "clip_vitbase16", batch_size=24, ram_budget_gb=8.0),
+    DatasetSpec("DomainNet", "DN", "clip_vitbase32", batch_size=32, ram_budget_gb=9.0),
 )}
 
 
