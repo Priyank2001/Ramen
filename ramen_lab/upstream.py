@@ -40,6 +40,31 @@ for _module in (_datasets, _methods, _models):
 UPSTREAM_METHODS = ("NoAdapt", "Tent", "Ramen")
 
 
+class _TorchWithMmCdist:
+    """Stands in for `torch` inside upstream's Ramen module, with one difference: `cdist` always takes the matrix-product
+    path. Why: torch 2.0.1 picks a direct kernel when both inputs have <= 25 rows, and that kernel has no fp16 CUDA
+    implementation, so Ramen's `PriorityCache.query` (fp16 keys) crashes for a batch of <= 25 images while a queue
+    holds <= 25 entries (ImageNet-C at batch 24, or a short last batch). With either input > 25 rows torch's default
+    already takes the matrix-product path, so every call that used to work returns exactly what it did before
+    (tests/test_lab_upstream_patch.py)."""
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(torch, name)
+
+    @staticmethod
+    def cdist(x1: torch.Tensor, x2: torch.Tensor, p: float = 2.0) -> torch.Tensor:
+        return torch.cdist(x1, x2, p=p, compute_mode="use_mm_for_euclid_dist")
+
+
+def _patch_small_batch_cdist() -> None:
+    module = sys.modules["methods.Ramen"]  # `methods.Ramen` as an attribute is the class, so go through sys.modules
+    _check_is_upstream(module)
+    module.torch = _TorchWithMmCdist()
+
+
+_patch_small_batch_cdist()
+
+
 def method_class(name: str) -> type:
     """An upstream TTA method class (NoAdapt, Tent, Ramen)."""
     return _methods.get_method_class(name)
