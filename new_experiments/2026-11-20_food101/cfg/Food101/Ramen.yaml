@@ -1,0 +1,11 @@
+# Cache settings copied unchanged from cfg/CIFAR100C (the closest setup: 100 classes, CLIP ViT-B/16); NOT tuned on Food-101.
+# max_capacity is per class queue; the test stream has only ~250 images per class, so the queues never fill.
+max_capacity: 750
+topk: 5
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+# Standard Food-101 prompt in the CLIP literature (CLIP / CoOp / TPT / TDA); null = the default 7-template ensemble
+templates: ["a photo of {}, a type of food."]

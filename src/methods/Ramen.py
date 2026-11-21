@@ -11,7 +11,7 @@ class PriorityCache:
     Store key-value pairs
     """
 
-    def __init__(self, max_capacity, key_dim, value_dim, device, dtype):
+    def __init__(self, max_capacity, key_dim, value_dim, device, dtype, priority_dtype=None):
 
         self.max_capacity = max_capacity
         self.key_dim = key_dim  # for embedding
@@ -22,7 +22,8 @@ class PriorityCache:
         self.keys = torch.empty((max_capacity, key_dim), device=device, dtype=dtype)
         self.values = torch.empty((max_capacity, value_dim), device=device, dtype=dtype)
 
-        self.priorities = torch.full((max_capacity,), float('-inf'), device=device, dtype=dtype)
+        # fp16 priorities (the default, as in the original code) become inf after 65,520 inserts and full queues freeze
+        self.priorities = torch.full((max_capacity,), float('-inf'), device=device, dtype=priority_dtype or dtype)
         self.entropies = torch.full((max_capacity,), float('inf'), device=device, dtype=dtype)
         self.size = 0
 
@@ -68,7 +69,9 @@ class PriorityCache:
         topk = min(topk, self.size)
 
         queries = queries.detach().to(device=self.device, dtype=self.dtype)
-        dist = torch.cdist(queries, self.keys[:self.size])  # torch.Tensor,
+        # mm path: the only cdist path implemented for fp16 on CUDA; it is also what the default picks whenever either
+        # side has > 25 rows, so results are unchanged (the default crashed on a <= 25 x <= 25 query, e.g. a 1-image batch)
+        dist = torch.cdist(queries, self.keys[:self.size], compute_mode='use_mm_for_euclid_dist')
         sorted_dist, indices = torch.topk(dist, k=topk, dim=1, largest=False, sorted=True)
 
         values = self.values[indices]  # num_queries * topk * value_dim
@@ -92,6 +95,8 @@ class Ramen(TTABase):
         self.num_classes = datasets.num_classes
         self.device = next(model.parameters()).device
         self.dtype = torch.half
+        # priority_fp32: true keeps queues updating past 65,520 samples (eviction only; retrieval never uses priorities)
+        self.priority_dtype = torch.float32 if self.cfg.get('priority_fp32', False) else self.dtype
 
         self.model = CLIPModelForBySampleTTA(model, datasets.classes, self.cfg, args)
 
@@ -103,7 +108,7 @@ class Ramen(TTABase):
 
         self.cache = [PriorityCache(max_capacity=self.cfg['max_capacity'],
                                     key_dim=self.feat_dim, value_dim=self.grad_dim,
-                                    device=self.device, dtype=self.dtype)
+                                    device=self.device, dtype=self.dtype, priority_dtype=self.priority_dtype)
                       for c in range(self.num_classes)]
 
         self.counter = 0
@@ -121,7 +126,7 @@ class Ramen(TTABase):
 
         with torch.no_grad():
             # Update cache
-            priorities = torch.arange(self.counter, self.counter + B, device=self.device, dtype=self.dtype)
+            priorities = torch.arange(self.counter, self.counter + B, device=self.device, dtype=self.priority_dtype)
             entropies = softmax_entropy(logits, reduction='none')  # negative of sample-based entropy
             self.counter = self.counter + B
 

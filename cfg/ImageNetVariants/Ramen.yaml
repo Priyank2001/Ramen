@@ -1,0 +1,6 @@
+max_capacity: 75
+topk: 1
+beta: 0.0
+
+optimizer: signsgd
+lr: 0.01

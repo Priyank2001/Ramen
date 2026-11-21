@@ -1,0 +1,5 @@
+# Zero-shot CLIP with the same prompt as Ramen (the repo default has no `templates`, so it would use the 7-template ensemble)
+optimizer: signsgd
+lr: 0.000000001
+
+templates: ["a photo of a {}, a type of flower."]

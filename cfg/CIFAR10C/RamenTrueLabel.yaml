@@ -1,0 +1,10 @@
+# Ramen's config, plus which class queue each test image is written to. true_label uses the TRUE labels
+# (an oracle / upper bound, not a method), see src/methods/RamenTrueLabel.py: zero_shot (== Ramen) | true_label
+max_capacity: 7500
+topk: 50
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+filing: zero_shot

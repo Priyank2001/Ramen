@@ -1,0 +1,37 @@
+dataset,run,queries,n,correct %,kept zero-shot %
+DomainNet,Ramen,zs wrong,281166,7.265458839262215,57.514066423394006
+DomainNet,Ramen,zs right,314840,96.72786177105831,96.72786177105831
+DomainNet,true-label oracle,zs wrong,281166,3.931129652945235,70.97337515915865
+DomainNet,true-label oracle,zs right,314840,95.63460805488502,95.63460805488502
+DomainNet,"A: oracle, hide same-zs (zs-wrong)",zs wrong,281166,5.7908850999053945,49.755660357226695
+DomainNet,"A: oracle, hide same-zs (zs-wrong)",zs right,314840,95.63460805488502,95.63460805488502
+DomainNet,"B: oracle, hide random (zs-wrong)",zs wrong,281166,3.928995682265992,70.92500515709581
+DomainNet,"B: oracle, hide random (zs-wrong)",zs right,314840,95.63460805488502,95.63460805488502
+DomainNet,"C: oracle, hide same-zs (all)",zs wrong,281166,5.7908850999053945,49.755660357226695
+DomainNet,"C: oracle, hide same-zs (all)",zs right,314840,93.72379621394994,93.72379621394994
+DomainNet,"D: Ramen, hide same-zs (all)",zs wrong,281166,7.929835044066494,54.6065313729256
+DomainNet,"D: Ramen, hide same-zs (all)",zs right,314840,95.77658493202897,95.77658493202897
+ImageNetC5K,Ramen,zs wrong,54540,13.217821782178218,33.01613494682802
+ImageNetC5K,Ramen,zs right,20460,86.02150537634408,86.02150537634408
+ImageNetC5K,true-label oracle,zs wrong,54540,11.961862852951962,38.22515584891823
+ImageNetC5K,true-label oracle,zs right,20460,86.7644183773216,86.7644183773216
+ImageNetC5K,"A: oracle, hide same-zs (zs-wrong)",zs wrong,54540,12.394572790612395,34.84781811514485
+ImageNetC5K,"A: oracle, hide same-zs (zs-wrong)",zs right,20460,86.7644183773216,86.7644183773216
+ImageNetC5K,"B: oracle, hide random (zs-wrong)",zs wrong,54540,11.952695269526952,38.13714704803814
+ImageNetC5K,"B: oracle, hide random (zs-wrong)",zs right,20460,86.7644183773216,86.7644183773216
+ImageNetC5K,"C: oracle, hide same-zs (all)",zs wrong,54540,12.394572790612395,34.84781811514485
+ImageNetC5K,"C: oracle, hide same-zs (all)",zs right,20460,86.4613880742913,86.4613880742913
+ImageNetC5K,"D: Ramen, hide same-zs (all)",zs wrong,54540,13.21965529886322,33.014301430143014
+ImageNetC5K,"D: Ramen, hide same-zs (all)",zs right,20460,86.02150537634408,86.02150537634408
+EuroSAT,Ramen,zs wrong,14016,35.73059360730594,43.785673515981735
+EuroSAT,Ramen,zs right,12984,91.66666666666666,91.66666666666666
+EuroSAT,true-label oracle,zs wrong,14016,24.507705479452056,55.650684931506845
+EuroSAT,true-label oracle,zs right,12984,90.27264325323475,90.27264325323475
+EuroSAT,"A: oracle, hide same-zs (zs-wrong)",zs wrong,14016,45.41238584474886,18.02939497716895
+EuroSAT,"A: oracle, hide same-zs (zs-wrong)",zs right,12984,90.27264325323475,90.27264325323475
+EuroSAT,"B: oracle, hide random (zs-wrong)",zs wrong,14016,24.885844748858446,55.21546803652968
+EuroSAT,"B: oracle, hide random (zs-wrong)",zs right,12984,90.27264325323475,90.27264325323475
+EuroSAT,"C: oracle, hide same-zs (all)",zs wrong,14016,45.41238584474886,18.02939497716895
+EuroSAT,"C: oracle, hide same-zs (all)",zs right,12984,64.60258780036968,64.60258780036968
+EuroSAT,"D: Ramen, hide same-zs (all)",zs wrong,14016,50.9703196347032,19.17808219178082
+EuroSAT,"D: Ramen, hide same-zs (all)",zs right,12984,71.96549599507087,71.96549599507087

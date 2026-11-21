@@ -102,7 +102,7 @@ class RamenExperiment:
                  algos=('NoAdapt', 'Ramen'), seed=0, num_workers=4, severity=5,
                  data_root='~/data', cfg_dir=os.path.join(ROOT, 'cfg'),
                  results_dir=os.path.join(ROOT, 'new_experiments', 'results'), device=None):
-        assert tta_mode in ('mixed', 'single'), tta_mode
+        assert tta_mode in ('mixed', 'single', 'sequential'), tta_mode
         self.model_name = model or self.default_model
         self.tta_mode = tta_mode
         self.batch_size = batch_size
@@ -217,7 +217,8 @@ class RamenExperiment:
 
             wrapped.featurize = featurize_and_keep
         tagged = [_TaggedDomain(ds, d) for d, ds in enumerate(self.datasets)]
-        # mixed: one shuffled stream over all corruptions; single: one stream per corruption, reset between
+        # mixed: one shuffled stream over all corruptions; single: one stream per corruption, reset between;
+        # sequential: the corruptions one after another (each shuffled), never reset (continual TTA)
         streams = [ConcatDataset(tagged)] if self.tta_mode == 'mixed' else tagged
 
         records, batch_counter = [], 0
@@ -1176,9 +1177,18 @@ class EuroSATExperiment(DomainNetExperiment):
     plot_confusion = RamenExperiment.plot_confusion  # 10 classes: the full matrix is readable
 
 
+class ImageNetVariantsExperiment(DomainNetExperiment):
+    """
+    ImageNet-R (30,000), ImageNet-A (7,500) and ImageNet-Sketch (50,889) as three domains of one stream over all
+    1,000 ImageNet classes (R and A each cover 200 of them). Held-out set: no setting was tuned on it.
+    """
+    dataset_name = 'ImageNetVariants'
+    default_model = 'clip_vitbase16'
+
+
 EXPERIMENTS = {'CIFAR10C': CIFAR10CExperiment, 'CIFAR100C': CIFAR100CExperiment,
                'ImageNetC5K': ImageNetC5KExperiment, 'DomainNet': DomainNetExperiment,
-               'EuroSAT': EuroSATExperiment}
+               'EuroSAT': EuroSATExperiment, 'ImageNetVariants': ImageNetVariantsExperiment}
 
 
 def make_experiment(dataset, **kwargs):

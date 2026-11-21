@@ -9,6 +9,9 @@ from .RamenActive import RamenActive
 from .RamenPolicy import RamenPolicy
 from .RamenQuality import RamenQuality
 from .RamenNSS import RamenNSS
+from .RamenOracle import RamenOracle
+from .RamenTrueLabel import RamenTrueLabel
+from .RamenRecorder import RamenRecorder, RamenTrueLabelRecorder
 
 
 def get_method_class(method_name):

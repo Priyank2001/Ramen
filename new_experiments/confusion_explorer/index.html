@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confusion Explorer</title>
+<style>
+:root {
+  --page: #f9f9f7; --surface: #fcfcfb; --raised: #ffffff;
+  --ink: #0b0b0b; --ink2: #52514e; --muted: #85847e; --line: #e4e3df; --line2: #cfcec8;
+  --accent: #2a78d6; --bar-a: #a3a29b; --bar-b: #2a78d6;
+  --hl: #0b0b0b; --hover: rgba(42,120,214,.08); --good: #0ca30c; --bad: #e34948;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222221;
+    --ink: #f0efec; --ink2: #c3c2b7; --muted: #8d8c85; --line: #2e2e2c; --line2: #44433f;
+    --accent: #3987e5; --bar-a: #6d6c66; --bar-b: #3987e5;
+    --hl: #f0efec; --hover: rgba(57,135,229,.14); --good: #2fbf2f; --bad: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d0d0d; --surface: #1a1a19; --raised: #222221;
+  --ink: #f0efec; --ink2: #c3c2b7; --muted: #8d8c85; --line: #2e2e2c; --line2: #44433f;
+  --accent: #3987e5; --bar-a: #6d6c66; --bar-b: #3987e5;
+  --hl: #f0efec; --hover: rgba(57,135,229,.14); --good: #2fbf2f; --bad: #e66767;
+  color-scheme: dark; 
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.num, td.n, th.n { font-variant-numeric: tabular-nums; }
+header { padding: 14px 20px 10px; border-bottom: 1px solid var(--line); background: var(--surface);
+  position: sticky; top: 0; z-index: 5; }
+h1 { font-size: 16px; margin: 0 0 10px; font-weight: 650; letter-spacing: -.01em; }
+h1 span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.ctl { display: flex; flex-direction: column; gap: 3px; }
+.ctl > label, .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.ctl .row { display: flex; gap: 4px; align-items: center; }
+select, input[type=text], input[type=search], button {
+  font: inherit; color: var(--ink); background: var(--raised); border: 1px solid var(--line2);
+  border-radius: 6px; padding: 4px 7px; height: 28px; }
+select { max-width: 290px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 6px; overflow: hidden; height: 28px; }
+.seg button { border: 0; border-radius: 0; height: 26px; background: var(--raised); color: var(--ink2); padding: 0 10px; }
+.seg button + button { border-left: 1px solid var(--line2); }
+.seg button.on { background: var(--accent); color: #fff; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; width: 16px; height: 16px; line-height: 16px;
+  text-align: center; border-radius: 4px; color: #fff; margin-right: 2px; }
+.tag.a { background: var(--bar-a); } .tag.b { background: var(--bar-b); }
+main { padding: 14px 20px 40px; }
+.summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: stretch; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 120px; }
+.tile .v { font-size: 20px; font-weight: 650; }
+.tile .s { color: var(--muted); font-size: 11.5px; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.domains { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px;
+  overflow-x: auto; flex: 1 1 380px; max-width: 100%; }
+.domains table { border-collapse: collapse; font-size: 12px; }
+.domains td, .domains th { padding: 1px 7px; text-align: right; white-space: nowrap; }
+.domains th { color: var(--muted); font-weight: 500; }
+.domains td:first-child, .domains th:first-child { text-align: left; }
+.domains tr.dom { cursor: pointer; } .domains tr.dom:hover { background: var(--hover); }
+.domains tr.on td { font-weight: 650; box-shadow: inset 2px 0 0 var(--accent); }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.matrix { position: relative; padding: 8px; }
+.matrix canvas { display: block; touch-action: none; outline: none; cursor: crosshair; max-width: 100%; }
+.matrix canvas.drag { cursor: grabbing; }
+.matrix canvas:focus-visible { box-shadow: 0 0 0 2px var(--accent); border-radius: 4px; }
+.mbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 4px 4px 8px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 11.5px; color: var(--ink2); }
+.ramp { display: inline-flex; align-items: center; gap: 5px; }
+.ramp i { display: inline-block; width: 90px; height: 10px; border-radius: 2px; border: 1px solid var(--line); }
+.hint { color: var(--muted); font-size: 11.5px; }
+.zoom { margin-left: auto; display: flex; gap: 4px; }
+.zoom button { width: 28px; padding: 0; }
+#tip { position: absolute; pointer-events: none; z-index: 4; background: var(--raised); border: 1px solid var(--line2);
+  border-radius: 6px; padding: 7px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.14);
+  max-width: 330px; display: none; }
+#tip b { font-weight: 600; }
+#tip table { border-collapse: collapse; margin-top: 4px; }
+#tip td { padding: 0 6px 0 0; }
+.side { padding: 12px 14px; position: sticky; top: 118px; max-height: calc(100vh - 130px); overflow: auto; }
+.side h2 { font-size: 14px; margin: 0 0 2px; }
+.side h3 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;
+  margin: 14px 0 6px; font-weight: 600; }
+.side .sub { color: var(--muted); font-size: 12px; }
+.empty { color: var(--muted); padding: 10px 0; }
+.bars { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 3px 8px; align-items: center; font-size: 12px; }
+.bars .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.bars .nm:hover { color: var(--accent); text-decoration: underline; }
+.bars .bb { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.bars .bb div { display: flex; align-items: center; gap: 4px; height: 9px; font-size: 10.5px; color: var(--ink2); }
+.bars .bb span.bar { height: 7px; border-radius: 0 3px 3px 0; min-width: 1px; }
+.bars .bb span.a { background: var(--bar-a); } .bars .bb span.b { background: var(--bar-b); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12.5px; }
+.kv .k { color: var(--muted); }
+table.mini { border-collapse: collapse; width: 100%; font-size: 12px; }
+table.mini td, table.mini th { padding: 2px 4px; text-align: right; }
+table.mini th { color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); }
+table.mini td:first-child, table.mini th:first-child { text-align: left; }
+a.cls { color: var(--ink); cursor: pointer; text-decoration: underline dotted var(--muted); }
+a.cls:hover { color: var(--accent); }
+.tables { margin-top: 14px; padding: 10px 14px 14px; }
+.tabs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.tabs .seg button { padding: 0 12px; }
+.scroll { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+table.list { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+table.list th { position: sticky; top: 0; background: var(--raised); text-align: right; font-weight: 600;
+  color: var(--ink2); padding: 5px 8px; border-bottom: 1px solid var(--line2); cursor: pointer; white-space: nowrap; user-select: none; }
+table.list th.sorted { color: var(--accent); }
+table.list td { padding: 3px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.list td.t, table.list th.t { text-align: left; }
+table.list td.t { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+table.list tbody tr { cursor: pointer; } table.list tbody tr:hover { background: var(--hover); }
+table.list tbody tr.on { box-shadow: inset 3px 0 0 var(--accent); }
+.foot { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+#status { color: var(--muted); font-size: 12px; min-height: 18px; }
+.methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.methods .m { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.methods .hd { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+.methods .nm { font-weight: 650; }
+.methods .kind { font-size: 10.5px; color: var(--ink2); border: 1px solid var(--line2); border-radius: 10px; padding: 0 7px; }
+.methods .kind.oracle, .methods .kind.control { color: var(--bad); border-color: var(--bad); }
+.methods .kind.sanity, .methods .kind.rerun { color: var(--muted); }
+.methods .tx { color: var(--ink); font-size: 12.5px; }
+.methods .st { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.methods details { margin-top: 3px; font-size: 11.5px; color: var(--ink2); }
+.methods summary { cursor: pointer; color: var(--muted); }
+.methods code { font-size: 11px; }
+.err { max-width: 680px; margin: 60px auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px 24px; }
+.err code { background: var(--page); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Confusion explorer <span id="subtitle">cached Ramen TTA runs · rows = true class, columns = predicted class</span></h1>
+  <div class="controls">
+    <div class="ctl"><label for="ds">Dataset</label><select id="ds"></select></div>
+    <div class="ctl"><label><span class="tag a">A</span> baseline run</label>
+      <div class="row"><select id="aVar"></select><select id="aSeed" title="seed"></select></div></div>
+    <div class="ctl"><label>&nbsp;</label><button id="swap" title="Swap A and B">⇄</button></div>
+    <div class="ctl"><label><span class="tag b">B</span> compared run</label>
+      <div class="row"><select id="bVar"></select><select id="bSeed" title="seed"></select></div></div>
+    <div class="ctl"><label for="dom">Domain</label><select id="dom"></select></div>
+    <div class="ctl"><span class="lbl">Show</span>
+      <div class="seg" id="view"><button data-v="A">A</button><button data-v="B">B</button><button data-v="diff">B − A</button></div></div>
+    <div class="ctl"><span class="lbl">Values</span>
+      <div class="seg" id="norm"><button data-v="row" title="% of the true class (row-normalised)">row %</button><button data-v="count" title="number of images (mean per run when seeds are pooled)">count</button></div></div>
+    <div class="ctl"><label for="order">Class order</label><select id="order"></select></div>
+    <div class="ctl"><label for="top">Classes shown</label>
+      <div class="row"><select id="top" title="Keep only the classes involved in the most errors (follows Show and Values)"></select><select id="rank"></select></div></div>
+    <div class="ctl"><label for="gamma">Contrast</label><input id="gamma" type="range" min="0.2" max="1" step="0.05" value="0.5" style="width:90px;height:28px"></div>
+    <div class="ctl"><label for="find">Find class</label><input id="find" type="search" list="classlist" placeholder="type a class…" style="width:170px"><datalist id="classlist"></datalist></div>
+  </div>
+</header>
+<main>
+  <div class="summary" id="summary"></div>
+  <div class="methods" id="methods"></div>
+  <div class="layout">
+    <div class="panel matrix" id="mwrap">
+      <div class="mbar">
+        <div class="legend" id="legend"></div>
+        <div class="zoom"><button id="zin" title="Zoom in (+)">+</button><button id="zout" title="Zoom out (−)">−</button><button id="zfit" title="Fit (0)" style="width:auto;padding:0 8px">fit</button></div>
+      </div>
+      <canvas id="cv" tabindex="0" aria-label="Confusion matrix. Arrow keys move, Enter selects, plus and minus zoom."></canvas>
+      <div class="hint" id="hint">Scroll to zoom · drag to pan · click a cell to inspect it · double-click to fit · arrow keys + Enter when focused</div>
+      <div id="tip"></div>
+      <div id="status"></div>
+    </div>
+    <aside class="panel side" id="side"></aside>
+  </div>
+  <section class="panel tables">
+    <div class="tabs">
+      <div class="seg" id="tab"><button data-v="pairs">Confused pairs</button><button data-v="classes">Classes</button></div>
+      <input id="filter" type="search" placeholder="filter by class name…" style="width:220px">
+      <span class="hint" id="tabhint"></span>
+    </div>
+    <div class="scroll"><table class="list" id="list"></table></div>
+    <div class="foot" id="listfoot"></div>
+  </section>
+</main>
+<script>
+// ------------------------------------------------------------------ data loading
+const CMX = { manifest: null, runs: {}, pending: {} };
+function b64buf(s) {
+  const bin = atob(s), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u.buffer;
+}
+CMX.add = (id, payload) => {
+  CMX.runs[id] = payload.domains.map(d => ({
+    k: d.k ? new Uint32Array(b64buf(d.k)) : new Uint32Array(0),
+    c: d.c ? (d.w === 4 ? new Uint32Array(b64buf(d.c)) : new Uint16Array(b64buf(d.c))) : new Uint16Array(0),
+  }));
+  if (CMX.pending[id]) CMX.pending[id].resolve();
+};
+function loadRun(id) {
+  if (CMX.runs[id]) return Promise.resolve();
+  if (CMX.pending[id]) return CMX.pending[id].promise;
+  const p = {};
+  p.promise = new Promise((res, rej) => { p.resolve = res; p.reject = rej; });
+  CMX.pending[id] = p;
+  const s = document.createElement('script');
+  s.src = 'data/runs/' + encodeURIComponent(id) + '.js';
+  s.onerror = () => { delete CMX.pending[id]; p.reject(new Error('could not load ' + id)); };
+  document.head.appendChild(s);
+  return p.promise;
+}
+</script>
+<script src="data/manifest.js"></script>
+<script src="methods.js"></script>
+<script>
+// ------------------------------------------------------------------ helpers
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = (x, d = 1) => (x == null || Number.isNaN(x)) ? '–' : x.toFixed(d);
+const sgn = (x, d = 2) => (x == null || Number.isNaN(x)) ? '–' : (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(x).toFixed(d);
+const cls = x => x > 0 ? 'pos' : x < 0 ? 'neg' : '';
+const fmtCount = x => x == null || Number.isNaN(x) ? '–' : (Math.abs(x - Math.round(x)) < 1e-9 ? String(Math.round(x)) : x.toFixed(1));
+
+if (!CMX.manifest) {
+  document.body.innerHTML = `<div class="err"><h2>No data yet</h2><p>Build the data files from the cached results first:</p>
+    <p><code>~/miniconda3/envs/RAMEN/bin/python new_experiments/confusion_explorer/build_data.py</code></p>
+    <p>then serve this folder, e.g. <code>cd new_experiments/confusion_explorer &amp;&amp; python -m http.server 8765</code>.</p></div>`;
+  throw new Error('manifest missing');
+}
+const MAN = CMX.manifest;
+const MODE_ORDER = { mixed: 0, sequential: 1, single: 2 };
+
+// variants = runs that differ only by seed
+function variantsOf(ds) {
+  const runs = Object.entries(MAN.runs).filter(([, r]) => r.dataset === ds);
+  const models = new Set(runs.map(([, r]) => r.model));
+  const vs = {};
+  for (const [id, r] of runs) {
+    const key = [r.model, r.mode, r.n, r.bs, r.algo].join('|');
+    if (!vs[key]) {
+      const extra = [models.size > 1 ? r.model.replace('clip_', '') : null, r.n !== 'all' ? 'n=' + r.n : null,
+                     r.bs !== 100 ? 'bs=' + r.bs : null].filter(Boolean).join(', ');
+      vs[key] = { key, algo: r.algo, mode: r.mode, model: r.model, label: r.algo + (extra ? ` (${extra})` : ''), seeds: {} };
+    }
+    vs[key].seeds[r.seed] = id;
+  }
+  return Object.values(vs).sort((a, b) => (MODE_ORDER[a.mode] - MODE_ORDER[b.mode]) || a.model.localeCompare(b.model) ||
+    (a.algo === 'NoAdapt' ? -1 : b.algo === 'NoAdapt' ? 1 : 0) || (a.algo === 'Ramen' ? -1 : b.algo === 'Ramen' ? 1 : 0) ||
+    a.algo.localeCompare(b.algo));
+}
+
+// ------------------------------------------------------------------ state
+const S = { ds: null, a: { v: null, seed: '0' }, b: { v: null, seed: '0' }, dom: 'all', view: 'diff', norm: 'row',
+  order: 'index', top: 'all', rank: 'pairs', gamma: 0.5, sel: null, cell: null, tab: 'pairs', filter: '',
+  sort: { pairs: ['b', -1], classes: ['d', 1] } };
+let VARS = [], DS = null, K = 0, N = 0, D = null;   // K classes, N of them shown; D = derived matrices
+const V = { s: 1, tx: 0, ty: 0, fit: 1 };     // view transform: cell (row r, col c) -> (x0 + tx + c*s, y0 + ty + r*s)
+let hover = null;                             // [row pos, col pos]
+
+function runIds(side) {
+  const v = VARS.find(x => x.key === S[side].v);
+  if (!v) return [];
+  if (S[side].seed === 'pooled') return Object.values(v.seeds);
+  return v.seeds[S[side].seed] ? [v.seeds[S[side].seed]] : [Object.values(v.seeds)[0]];
+}
+function runSeeds(side) {
+  return runIds(side).map(id => MAN.runs[id].seed);
+}
+
+// ------------------------------------------------------------------ matrices
+const mcache = new Map();
+function matrix(ids, dom) {
+  const key = ids.join(',') + '@' + dom;
+  if (mcache.has(key)) { const m = mcache.get(key); mcache.delete(key); mcache.set(key, m); return m; }
+  const M = new Float64Array(K * K);
+  const doms = dom === 'all' ? DS.domains.map((_, i) => i) : [Number(dom)];
+  for (const id of ids) for (const d of doms) {
+    const { k, c } = CMX.runs[id][d];
+    for (let i = 0; i < k.length; i++) M[(k[i] >>> 16) * K + (k[i] & 0xffff)] += c[i];
+  }
+  if (ids.length > 1) for (let i = 0; i < M.length; i++) M[i] /= ids.length;  // mean count per run
+  const row = new Float64Array(K), col = new Float64Array(K);
+  let total = 0, correct = 0;
+  for (let i = 0; i < K; i++) for (let j = 0; j < K; j++) {
+    const x = M[i * K + j]; row[i] += x; col[j] += x; total += x; if (i === j) correct += x;
+  }
+  const m = { M, row, col, total, acc: total ? correct / total * 100 : NaN, nRuns: ids.length };
+  mcache.set(key, m);
+  while (mcache.size > 8) mcache.delete(mcache.keys().next().value);
+  return m;
+}
+const val = (m, i, j) => S.norm === 'row' ? (m.row[i] ? m.M[i * K + j] / m.row[i] * 100 : NaN) : m.M[i * K + j];
+const accOf = (m, i) => m.row[i] ? m.M[i * K + i] / m.row[i] * 100 : NaN;
+
+// per-class, per-domain accuracy straight from the sparse counts
+function classByDomain(ids, c) {
+  return DS.domains.map((_, d) => {
+    let n = 0, ok = 0;
+    for (const id of ids) {
+      const { k, c: cnt } = CMX.runs[id][d];
+      for (let i = 0; i < k.length; i++) if ((k[i] >>> 16) === c) { n += cnt[i]; if ((k[i] & 0xffff) === c) ok += cnt[i]; }
+    }
+    return { n: n / ids.length, acc: n ? ok / n * 100 : NaN };
+  });
+}
+function cellByDomain(ids, i, j) {
+  return DS.domains.map((_, d) => {
+    let n = 0, x = 0;
+    const key = ((i << 16) | j) >>> 0;
+    for (const id of ids) {
+      const { k, c } = CMX.runs[id][d];
+      for (let t = 0; t < k.length; t++) if ((k[t] >>> 16) === i) { n += c[t]; if (k[t] === key) x += c[t]; }
+    }
+    return { n: n / ids.length, x: x / ids.length, pct: n ? x / n * 100 : NaN };
+  });
+}
+
+// ------------------------------------------------------------------ class orders
+function clusterOrder(A, B) {
+  // Single-linkage leaf order of the symmetric confusion graph: w(i,j) = row-% confusion both ways, A and B summed.
+  // Merging the strongest pairs first keeps mutually confused classes in contiguous blocks; a sink only links its
+  // block late, since each row sends it a small share. When two blocks merge, the linking classes are put side by side.
+  const W = new Map();
+  for (const m of [A, B]) for (let i = 0; i < K; i++) {
+    if (!m.row[i]) continue;
+    for (let j = 0; j < K; j++) if (i !== j) { const x = m.M[i * K + j];
+      if (x) { const key = i < j ? i * K + j : j * K + i; W.set(key, (W.get(key) || 0) + x / m.row[i]); } }
+  }
+  const edges = [...W].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const parent = [...Array(K).keys()], members = Array.from({ length: K }, (_, i) => [i]);
+  const root = i => { while (parent[i] !== i) i = parent[i] = parent[parent[i]]; return i; };
+  for (const [key] of edges) {
+    const i = Math.floor(key / K), j = key % K, ri = root(i), rj = root(j);
+    if (ri === rj) continue;
+    let a = members[ri], b = members[rj];
+    if (a.indexOf(i) < a.length / 2) a.reverse();  // i towards the end of a
+    if (b.indexOf(j) > b.length / 2) b.reverse();  // j towards the start of b
+    const big = a.length >= b.length ? ri : rj, small = big === ri ? rj : ri;
+    parent[small] = big; members[big] = a.concat(b); members[small] = null;
+  }
+  const blocks = members.filter((m, r) => m && root(r) === r).sort((x, y) => y.length - x.length || x[0] - y[0]);
+  return blocks.flat();
+}
+function computeOrder(A, B) {
+  const idx = [...Array(K).keys()];
+  const sup = DS.superclasses;
+  const by = f => idx.sort((a, b) => { const fa = f(a), fb = f(b);
+    return (Number.isNaN(fa) ? 1 : 0) - (Number.isNaN(fb) ? 1 : 0) || fa - fb || a - b; });
+  switch (S.order) {
+    case 'name': return idx.sort((a, b) => DS.classes[a].localeCompare(DS.classes[b]));
+    case 'super': return idx.sort((a, b) => (sup[DS.classes[a]] || '').localeCompare(sup[DS.classes[b]] || '') || a - b);
+    case 'accA': return by(i => accOf(A, i));
+    case 'accB': return by(i => accOf(B, i));
+    case 'delta': return by(i => accOf(B, i) - accOf(A, i));
+    case 'sinkB': return by(i => -(B.col[i] - B.row[i]));
+    case 'cluster': return clusterOrder(A, B);
+    default: return idx;
+  }
+}
+
+// ------------------------------------------------------------------ top-N classes
+const RANKS = { pairs: 'biggest confused pairs', both: 'by errors in + out', row: 'most misclassified', col: 'most over-predicted (sinks)' };
+// Per class: how much it is involved in errors under the current view. row = its images predicted as something else,
+// col = other classes' images predicted as it. Values = row %: row as % of the class's images, col as % of the mean
+// class size; count: images. B − A: the absolute change of each.
+function errorScores(A, B) {
+  const one = (m, rank) => {
+    const meanRow = m.total / K, out = new Float64Array(K);
+    for (let i = 0; i < K; i++) {
+      const rowErr = m.row[i] - m.M[i * K + i], colErr = m.col[i] - m.M[i * K + i];
+      const r = S.norm === 'row' ? (m.row[i] ? rowErr / m.row[i] * 100 : 0) : rowErr;
+      const c = S.norm === 'row' ? (meanRow ? colErr / meanRow * 100 : 0) : colErr;
+      out[i] = rank === 'row' ? r : rank === 'col' ? c : r + c;
+    }
+    return out;
+  };
+  if (S.view !== 'diff') return one(S.view === 'A' ? A : B, S.rank);
+  const change = rank => { const a = one(A, rank), b = one(B, rank); return a.map((x, i) => Math.abs(b[i] - x)); };
+  if (S.rank !== 'both') return change(S.rank);
+  const r = change('row'), c = change('col');
+  return r.map((x, i) => x + c[i]);
+}
+// pairs: walk the off-diagonal cells from the largest (same value as the matrix shows: row % or count; B − A: |change|)
+// and take both classes of each until there are n, so the shown block holds the biggest confusions themselves
+function topPairClasses(A, B, n) {
+  const cell = (m, i, j) => S.norm === 'row' ? (m.row[i] ? m.M[i * K + j] / m.row[i] * 100 : 0) : m.M[i * K + j];
+  const cells = [];
+  for (let i = 0; i < K; i++) for (let j = 0; j < K; j++) {
+    if (i === j) continue;
+    const v = S.view === 'A' ? cell(A, i, j) : S.view === 'B' ? cell(B, i, j) : Math.abs(cell(B, i, j) - cell(A, i, j));
+    if (v > 0) cells.push([v, i, j]);
+  }
+  cells.sort((x, y) => y[0] - x[0]);
+  const out = new Set();
+  for (const [, i, j] of cells) {
+    if (out.size >= n) break;
+    out.add(i); if (out.size < n) out.add(j);
+  }
+  return out;
+}
+function topClasses(A, B) {
+  if (S.top === 'all' || Number(S.top) >= K) return null;
+  if (S.rank === 'pairs') return topPairClasses(A, B, Number(S.top));
+  const sc = errorScores(A, B);
+  return new Set([...Array(K).keys()].sort((a, b) => sc[b] - sc[a] || a - b).slice(0, Number(S.top)));
+}
+// share of the view's errors (images; B − A: |change|) that sit in cells between shown classes
+function errorCoverage(A, B, shown) {
+  let all = 0, kept = 0;
+  for (let i = 0; i < K; i++) for (let j = 0; j < K; j++) {
+    if (i === j) continue;
+    const q = i * K + j, x = S.view === 'A' ? A.M[q] : S.view === 'B' ? B.M[q] : Math.abs(B.M[q] - A.M[q]);
+    all += x; if (shown[i] && shown[j]) kept += x;
+  }
+  return all ? kept / all * 100 : NaN;
+}
+
+// ------------------------------------------------------------------ colour
+const RAMPS = {
+  light: { off: ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'],
+           diag: ['#e9e8e4', '#bdbcb6', '#8d8c85', '#5c5b57', '#2b2a28'],
+           mid: '#f0efec', good: ['#dbe7f7', '#86b6ef', '#2a78d6', '#104281'], bad: ['#f8dcdb', '#f0a19f', '#e34948', '#8f1f1e'],
+           grid: 'rgba(0,0,0,.07)', sep: 'rgba(0,0,0,.35)' },
+  dark:  { off: ['#123a6b', '#184f95', '#2a78d6', '#6da7ec', '#cde2fb'],
+           diag: ['#33332f', '#55544f', '#83827b', '#b5b4ac', '#e8e7e1'],
+           mid: '#383835', good: ['#1d3555', '#256abf', '#5598e7', '#b7d3f6'], bad: ['#4a2120', '#a63736', '#e66767', '#f6c1c0'],
+           grid: 'rgba(255,255,255,.07)', sep: 'rgba(255,255,255,.4)' },
+};
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const theme = () => { const t = document.documentElement.dataset.theme; return t === 'dark' || t === 'light' ? t : darkMQ.matches ? 'dark' : 'light'; };
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function lut(stops) {  // 256-entry RGB lookup through evenly spaced stops
+  const cs = stops.map(hex), out = new Uint8Array(256 * 3);
+  for (let t = 0; t < 256; t++) {
+    const x = t / 255 * (cs.length - 1), i = Math.min(Math.floor(x), cs.length - 2), f = x - i;
+    for (let k = 0; k < 3; k++) out[t * 3 + k] = Math.round(cs[i][k] + (cs[i + 1][k] - cs[i][k]) * f);
+  }
+  return out;
+}
+let LUT = null;
+function buildLuts() {
+  const r = RAMPS[theme()];
+  LUT = { off: lut(r.off), diag: lut(r.diag), good: lut([r.mid, ...r.good]), bad: lut([r.mid, ...r.bad]), r };
+}
+
+// ------------------------------------------------------------------ derive (matrices -> per-cell intensities)
+let ORDER = [], INV = [], INT = null, KIND = null, SCALE = {}, levels = new Map(), groupBreaks = [], COVER = NaN;
+function derive() {
+  const A = matrix(runIds('a'), S.dom), B = matrix(runIds('b'), S.dom);
+  const top = topClasses(A, B);
+  ORDER = top ? computeOrder(A, B).filter(c => top.has(c)) : computeOrder(A, B);
+  if (N !== ORDER.length) { N = ORDER.length; V.fit = side / N; fitView(); }
+  INV = new Int32Array(K).fill(-1); ORDER.forEach((c, p) => INV[c] = p);
+  const shown = new Uint8Array(K); ORDER.forEach(c => shown[c] = 1);
+  COVER = top ? errorCoverage(A, B, shown) : NaN;
+  groupBreaks = [];
+  if (S.order === 'super' && DS.superclasses) for (let p = 1; p < N; p++)
+    if (DS.superclasses[DS.classes[ORDER[p]]] !== DS.superclasses[DS.classes[ORDER[p - 1]]]) groupBreaks.push(p);
+  D = { A, B };
+  // raw values in class space, then scales
+  const raw = new Float64Array(K * K), has = new Uint8Array(K * K);
+  let offMax = 0, diagMax = 0;
+  for (let i = 0; i < K; i++) for (let j = 0; j < K; j++) {
+    const q = i * K + j, a = A.M[q], b = B.M[q];
+    let v, h;
+    if (S.view === 'A') { v = val(A, i, j); h = a > 0; }
+    else if (S.view === 'B') { v = val(B, i, j); h = b > 0; }
+    else { v = val(B, i, j) - val(A, i, j); h = (a > 0 || b > 0) && !Number.isNaN(v); if (i !== j) v = -v; } // + = B better
+    if (!h) continue;
+    has[q] = 1; raw[q] = v;
+    if (!shown[i] || !shown[j]) continue;  // colour scale from the shown cells only
+    const av = Math.abs(v);
+    if (i === j) { if (av > diagMax) diagMax = av; } else if (av > offMax) offMax = av;
+  }
+  if (S.view !== 'diff' && S.norm === 'row') diagMax = 100;
+  SCALE = { off: offMax || 1, diag: diagMax || 1 };
+  // intensities in display (ordered) space
+  INT = new Float32Array(N * N); KIND = new Uint8Array(N * N);
+  const g = S.gamma;
+  for (let pr = 0; pr < N; pr++) { const i = ORDER[pr];
+    for (let pc = 0; pc < N; pc++) { const j = ORDER[pc], q = i * K + j;
+      if (!has[q]) continue;
+      const d = i === j, v = raw[q] / (d ? SCALE.diag : SCALE.off);
+      const p = pr * N + pc;
+      KIND[p] = d ? 2 : 1;
+      INT[p] = Math.sign(v) * Math.pow(Math.min(1, Math.abs(v)), g);
+    }
+  }
+  levels = new Map();
+}
+function levelCanvas(f) {
+  // f x f blocks of cells -> one pixel, keeping the most intense cell of each block (so rare confusions stay visible)
+  if (levels.has(f)) return levels.get(f);
+  const P = Math.ceil(N / f), img = new ImageData(P, P), px = img.data;
+  const best = new Float32Array(P * P).fill(-1), bv = new Float32Array(P * P), bk = new Uint8Array(P * P);
+  for (let r = 0; r < N; r++) { const br = (r / f | 0) * P;
+    for (let c = 0; c < N; c++) { const p = r * N + c; if (!KIND[p]) continue;
+      const b = br + (c / f | 0), a = Math.abs(INT[p]) + (KIND[p] === 1 ? 1e-6 : 0);
+      if (a > best[b]) { best[b] = a; bv[b] = INT[p]; bk[b] = KIND[p]; } } }
+  const diff = S.view === 'diff';
+  for (let b = 0; b < P * P; b++) {
+    if (!bk[b]) continue;
+    let L, t;
+    if (diff) { L = bv[b] >= 0 ? LUT.good : LUT.bad; t = Math.round(Math.abs(bv[b]) * 255); }
+    else { L = bk[b] === 2 ? LUT.diag : LUT.off; t = Math.round(bv[b] * 255); }
+    px[b * 4] = L[t * 3]; px[b * 4 + 1] = L[t * 3 + 1]; px[b * 4 + 2] = L[t * 3 + 2]; px[b * 4 + 3] = 255;
+  }
+  const cv = document.createElement('canvas'); cv.width = cv.height = P;
+  cv.getContext('2d').putImageData(img, 0, 0);
+  levels.set(f, cv);
+  return cv;
+}
+
+// ------------------------------------------------------------------ canvas
+const cv = $('cv'), ctx = cv.getContext('2d');
+const M = { L: 170, T: 130, R: 10, B: 10 };
+let side = 600;
+function layoutCanvas() {
+  const wrap = $('mwrap'), avail = wrap.clientWidth - 16;
+  M.L = Math.min(170, Math.max(90, avail * 0.2)); M.T = M.L * 0.75;
+  side = Math.max(260, Math.min(avail - M.L - M.R, window.innerHeight - 200 - M.T));
+  const W = M.L + side + M.R, H = M.T + side + M.B, dpr = window.devicePixelRatio || 1;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const oldFit = V.fit; V.fit = side / (N || K);
+  if (!oldFit || V.s < V.fit || V.s === oldFit) fitView(); else clampView();
+}
+function fitView() { V.s = V.fit; V.tx = 0; V.ty = 0; }
+function clampView() {
+  V.s = Math.max(V.fit, Math.min(V.s, Math.max(60, V.fit)));
+  const span = N * V.s;
+  V.tx = span <= side ? 0 : Math.min(0, Math.max(side - span, V.tx));
+  V.ty = span <= side ? 0 : Math.min(0, Math.max(side - span, V.ty));
+}
+function zoomAt(f, px, py) {
+  const s0 = V.s; V.s = Math.max(V.fit, Math.min(V.s * f, Math.max(60, V.fit)));
+  V.tx = px - (px - V.tx) * V.s / s0; V.ty = py - (py - V.ty) * V.s / s0;
+  clampView(); draw();
+}
+function centerOn(r, c, minS) {
+  if (minS) V.s = Math.max(V.s, Math.min(minS, Math.max(60, V.fit)));
+  V.tx = side / 2 - (c + 0.5) * V.s; V.ty = side / 2 - (r + 0.5) * V.s; clampView();
+}
+function ensureVisible(r, c) {
+  const x = V.tx + c * V.s, y = V.ty + r * V.s;
+  if (x < 0 || y < 0 || x + V.s > side || y + V.s > side) centerOn(r, c);
+}
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function draw() {
+  if (!D) return;
+  const W = M.L + side + M.R, H = M.T + side + M.B;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = css('--surface'); ctx.fillRect(0, 0, W, H);
+  const x0 = M.L, y0 = M.T, s = V.s;
+  const c0 = Math.max(0, Math.floor(-V.tx / s)), c1 = Math.min(N, Math.ceil((side - V.tx) / s));
+  const r0 = Math.max(0, Math.floor(-V.ty / s)), r1 = Math.min(N, Math.ceil((side - V.ty) / s));
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, side, side); ctx.clip();
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, Math.min(side, N * s) - 1, Math.min(side, N * s) - 1);
+  const f = s >= 1 ? 1 : Math.pow(2, Math.ceil(Math.log2(1 / s)));
+  const img = levelCanvas(f);
+  const sx0 = Math.floor(c0 / f), sx1 = Math.ceil(c1 / f), sy0 = Math.floor(r0 / f), sy1 = Math.ceil(r1 / f);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, sx0, sy0, sx1 - sx0, sy1 - sy0, x0 + V.tx + sx0 * f * s, y0 + V.ty + sy0 * f * s, (sx1 - sx0) * f * s, (sy1 - sy0) * f * s);
+  if (s >= 7) {  // cell grid
+    ctx.strokeStyle = LUT.r.grid; ctx.beginPath();
+    for (let c = c0; c <= c1; c++) { const x = Math.round(x0 + V.tx + c * s) + 0.5; ctx.moveTo(x, y0 + V.ty + r0 * s); ctx.lineTo(x, y0 + V.ty + r1 * s); }
+    for (let r = r0; r <= r1; r++) { const y = Math.round(y0 + V.ty + r * s) + 0.5; ctx.moveTo(x0 + V.tx + c0 * s, y); ctx.lineTo(x0 + V.tx + c1 * s, y); }
+    ctx.stroke();
+  }
+  if (groupBreaks.length) {
+    ctx.strokeStyle = LUT.r.sep; ctx.beginPath();
+    for (const p of groupBreaks) { const x = Math.round(x0 + V.tx + p * s) + 0.5, y = Math.round(y0 + V.ty + p * s) + 0.5;
+      ctx.moveTo(x, y0 + V.ty); ctx.lineTo(x, y0 + V.ty + N * s); ctx.moveTo(x0 + V.tx, y); ctx.lineTo(x0 + V.tx + N * s, y); }
+    ctx.stroke();
+  }
+  // selection: row + column band of the selected class, outline of the selected cell
+  const hl = css('--hl');
+  if (S.sel != null && INV[S.sel] >= 0) {
+    const p = INV[S.sel];
+    ctx.strokeStyle = hl; ctx.globalAlpha = 0.55; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.strokeRect(x0 + V.tx - 0.5, y0 + V.ty + p * s - 0.5, N * s + 1, Math.max(1, s) + 1);
+    ctx.strokeRect(x0 + V.tx + p * s - 0.5, y0 + V.ty - 0.5, Math.max(1, s) + 1, N * s + 1);
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  const box = (r, c, w) => { ctx.lineWidth = w; ctx.strokeRect(x0 + V.tx + c * s - w / 2, y0 + V.ty + r * s - w / 2, Math.max(s, 2) + w, Math.max(s, 2) + w); };
+  if (S.cell && INV[S.cell[0]] >= 0 && INV[S.cell[1]] >= 0) { ctx.strokeStyle = hl; box(INV[S.cell[0]], INV[S.cell[1]], 2); }
+  if (hover) { ctx.strokeStyle = css('--accent'); box(hover[0], hover[1], 1.5); }
+  ctx.restore();
+  // labels
+  ctx.fillStyle = css('--ink2');
+  const fs = Math.min(12, Math.floor(s) - 1);
+  if (fs >= 8) {
+    ctx.font = `${fs}px ui-sans-serif, system-ui, sans-serif`;
+    ctx.textBaseline = 'middle';
+    const fit = (t, w) => { if (ctx.measureText(t).width <= w) return t; while (t.length > 1 && ctx.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; };
+    ctx.save(); ctx.beginPath(); ctx.rect(0, y0, x0, side); ctx.clip(); ctx.textAlign = 'right';
+    for (let r = r0; r < r1; r++) { const c = ORDER[r];
+      ctx.font = `${c === S.sel ? 'bold ' : ''}${fs}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillStyle = c === S.sel ? css('--ink') : css('--ink2');
+      ctx.fillText(fit(DS.classes[c], x0 - 8), x0 - 5, y0 + V.ty + (r + 0.5) * s); }
+    ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, side, y0); ctx.clip(); ctx.textAlign = 'left';
+    for (let k = c0; k < c1; k++) { const c = ORDER[k];
+      ctx.save(); ctx.translate(x0 + V.tx + (k + 0.5) * s, y0 - 5); ctx.rotate(-Math.PI / 3);
+      ctx.font = `${c === S.sel ? 'bold ' : ''}${fs}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillStyle = c === S.sel ? css('--ink') : css('--ink2');
+      ctx.fillText(fit(DS.classes[c], (y0 - 10) / Math.sin(Math.PI / 3)), 0, 0); ctx.restore(); }
+    ctx.restore();
+  } else {
+    ctx.font = '11px ui-sans-serif, system-ui, sans-serif'; ctx.fillStyle = css('--muted');
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(`${r0 + 1}–${r1} of ${N}`, x0 - 6, y0 + 8);
+    ctx.fillText('zoom in for names', x0 - 6, y0 + 24);
+  }
+  ctx.fillStyle = css('--muted'); ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('true class ↓   predicted class →', 6, 14);
+}
+
+// ------------------------------------------------------------------ tooltip + pointer
+const tip = $('tip'), HINT = $('hint').textContent;
+function cellAt(ev) {
+  const r = cv.getBoundingClientRect(), x = ev.clientX - r.left - M.L, y = ev.clientY - r.top - M.T;
+  if (x < 0 || y < 0 || x >= side || y >= side) return null;
+  const c = Math.floor((x - V.tx) / V.s), rr = Math.floor((y - V.ty) / V.s);
+  return c >= 0 && c < N && rr >= 0 && rr < N ? [rr, c] : null;
+}
+function aName() { const v = VARS.find(x => x.key === S.a.v); return v ? v.label : 'A'; }
+function bName() { const v = VARS.find(x => x.key === S.b.v); return v ? v.label : 'B'; }
+function showTip(pos, ev) {
+  if (!pos) { tip.style.display = 'none'; return; }
+  const i = ORDER[pos[0]], j = ORDER[pos[1]], A = D.A, B = D.B, q = i * K + j;
+  const pa = A.row[i] ? A.M[q] / A.row[i] * 100 : NaN, pb = B.row[i] ? B.M[q] / B.row[i] * 100 : NaN;
+  const d = pb - pa, good = i === j ? d : -d;
+  tip.innerHTML = `<div><b>${esc(DS.classes[i])}</b> → <b>${esc(DS.classes[j])}</b>${i === j ? ' <span class="sub">(correct)</span>' : ''}</div>
+    <table class="num"><tr><td><span class="tag a">A</span></td><td>${fmt(pa, 2)}%</td><td>${fmtCount(A.M[q])} / ${fmtCount(A.row[i])}</td></tr>
+    <tr><td><span class="tag b">B</span></td><td>${fmt(pb, 2)}%</td><td>${fmtCount(B.M[q])} / ${fmtCount(B.row[i])}</td></tr>
+    <tr><td>Δ</td><td class="${cls(good)}">${sgn(d)} pts</td><td>${sgn(B.M[q] - A.M[q], 1)} images</td></tr></table>`;
+  tip.style.display = 'block';
+  const wr = $('mwrap').getBoundingClientRect();
+  let x = ev.clientX - wr.left + 14, y = ev.clientY - wr.top + 14;
+  if (x + tip.offsetWidth > wr.width - 4) x = ev.clientX - wr.left - tip.offsetWidth - 14;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+let drag = null;
+cv.addEventListener('pointerdown', ev => { drag = { x: ev.clientX, y: ev.clientY, tx: V.tx, ty: V.ty, moved: false }; cv.setPointerCapture(ev.pointerId); });
+cv.addEventListener('pointermove', ev => {
+  if (drag) {
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    if (drag.moved) { cv.classList.add('drag'); V.tx = drag.tx + dx; V.ty = drag.ty + dy; clampView(); tip.style.display = 'none'; draw(); return; }
+  }
+  const p = cellAt(ev);
+  if (String(p) !== String(hover)) { hover = p; draw(); }
+  showTip(p, ev);
+});
+cv.addEventListener('pointerup', ev => {
+  const wasDrag = drag && drag.moved; drag = null; cv.classList.remove('drag');
+  if (!wasDrag) { const p = cellAt(ev); if (p) selectCell(ORDER[p[0]], ORDER[p[1]], false); }
+});
+cv.addEventListener('pointerleave', () => { if (!drag) { hover = null; tip.style.display = 'none'; draw(); } });
+cv.addEventListener('dblclick', () => { fitView(); draw(); });
+cv.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  const r = cv.getBoundingClientRect();
+  zoomAt(Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.0018)), ev.clientX - r.left - M.L, ev.clientY - r.top - M.T);
+}, { passive: false });
+cv.addEventListener('keydown', ev => {
+  const mv = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[ev.key];
+  if (mv) {
+    ev.preventDefault();
+    const cur = hover || (S.cell && INV[S.cell[0]] >= 0 && INV[S.cell[1]] >= 0 ? [INV[S.cell[0]], INV[S.cell[1]]] : [0, 0]);
+    hover = [Math.max(0, Math.min(N - 1, cur[0] + mv[0])), Math.max(0, Math.min(N - 1, cur[1] + mv[1]))];
+    ensureVisible(hover[0], hover[1]); draw();
+    const r = cv.getBoundingClientRect();
+    showTip(hover, { clientX: r.left + M.L + V.tx + (hover[1] + 1) * V.s, clientY: r.top + M.T + V.ty + (hover[0] + 1) * V.s });
+  } else if (ev.key === 'Enter' && hover) selectCell(ORDER[hover[0]], ORDER[hover[1]], false);
+  else if (ev.key === '+' || ev.key === '=') zoomAt(1.5, side / 2, side / 2);
+  else if (ev.key === '-') zoomAt(1 / 1.5, side / 2, side / 2);
+  else if (ev.key === '0') { fitView(); draw(); }
+});
+$('zin').onclick = () => zoomAt(1.6, side / 2, side / 2);
+$('zout').onclick = () => zoomAt(1 / 1.6, side / 2, side / 2);
+$('zfit').onclick = () => { fitView(); draw(); };
+
+// ------------------------------------------------------------------ selection
+function selectCell(i, j, zoom) {
+  S.cell = [i, j]; S.sel = i;
+  if (zoom && INV[i] >= 0 && INV[j] >= 0) centerOn(INV[i], INV[j], side / 30);
+  noteHidden();
+  draw(); renderSide(); markRows(); saveHash();
+}
+function selectClass(c, zoom) {
+  S.sel = c; S.cell = null;
+  if (zoom && INV[c] >= 0) centerOn(INV[c], INV[c], side / 30);
+  noteHidden();
+  draw(); renderSide(); markRows(); saveHash();
+}
+
+function noteHidden() {  // the matrix hint says when the selection lies outside the shown classes
+  const hidden = [S.sel, ...(S.cell || [])].filter(c => c != null && INV[c] < 0);
+  $('hint').textContent = hidden.length ? `${[...new Set(hidden)].map(c => DS.classes[c]).join(', ')} not among the ${N} classes shown` +
+    ' · set Classes shown to "all" to see it in the matrix' : HINT;
+}
+
+// ------------------------------------------------------------------ side panel
+function barRows(items, maxv, onName, onBar) {
+  return `<div class="bars">` + items.map(it => `
+    <div class="nm" data-c="${it.c}" title="${esc(DS.classes[it.c])}">${esc(DS.classes[it.c])}</div>
+    <div class="bb" data-c="${it.c}" title="A ${fmt(it.a, 2)}% · B ${fmt(it.b, 2)}%">
+      <div><span class="bar a" style="width:${(it.a / maxv * 100 || 0) * 0.8}%"></span>${fmt(it.a, 1)}</div>
+      <div><span class="bar b" style="width:${(it.b / maxv * 100 || 0) * 0.8}%"></span>${fmt(it.b, 1)}</div>
+    </div>`).join('') + `</div>`;
+}
+function renderSide() {
+  const el = $('side');
+  if (S.sel == null) {
+    el.innerHTML = `<h2>Nothing selected</h2><p class="sub">Click a cell in the matrix, a row in the tables below, or search for a class.
+      The panel then shows where that class's images go under <span class="tag a">A</span> and <span class="tag b">B</span>, what gets predicted as it, and its accuracy per domain.</p>`;
+    return;
+  }
+  const c = S.sel, A = D.A, B = D.B, idsA = runIds('a'), idsB = runIds('b');
+  const accA = accOf(A, c), accB = accOf(B, c);
+  const sup = DS.superclasses ? DS.superclasses[DS.classes[c]] : null;
+  let html = '';
+  if (S.cell && S.cell[0] !== S.cell[1]) {
+    const [i, j] = S.cell, q = i * K + j, r = j * K + i;
+    const pa = val(A, i, j), pb = val(B, i, j);
+    const ra = A.row[i] ? A.M[q] / A.row[i] * 100 : NaN, rb = B.row[i] ? B.M[q] / B.row[i] * 100 : NaN;
+    const ba = A.row[j] ? A.M[r] / A.row[j] * 100 : NaN, bb = B.row[j] ? B.M[r] / B.row[j] * 100 : NaN;
+    html += `<h3>Selected confusion</h3><h2><a class="cls" data-c="${i}">${esc(DS.classes[i])}</a> → <a class="cls" data-c="${j}">${esc(DS.classes[j])}</a></h2>
+      <table class="mini num"><tr><th></th><th><span class="tag a">A</span></th><th><span class="tag b">B</span></th><th>Δ</th></tr>
+      <tr><td>% of ${esc(DS.classes[i])}</td><td>${fmt(ra, 2)}</td><td>${fmt(rb, 2)}</td><td class="${cls(ra - rb)}">${sgn(rb - ra)}</td></tr>
+      <tr><td>images</td><td>${fmtCount(A.M[q])}</td><td>${fmtCount(B.M[q])}</td><td>${sgn(B.M[q] - A.M[q], 1)}</td></tr>
+      <tr><td>reverse (${esc(DS.classes[j])} → ${esc(DS.classes[i])}) %</td><td>${fmt(ba, 2)}</td><td>${fmt(bb, 2)}</td><td class="${cls(ba - bb)}">${sgn(bb - ba)}</td></tr></table>`;
+    if (DS.domains.length > 1 && S.dom === 'all') {
+      const da = cellByDomain(idsA, i, j), db = cellByDomain(idsB, i, j);
+      html += `<h3>By domain (% of ${esc(DS.classes[i])})</h3><table class="mini num"><tr><th>domain</th><th>A</th><th>B</th><th>Δ</th></tr>` +
+        DS.domains.map((d, k) => `<tr><td>${esc(d)}</td><td>${fmt(da[k].pct, 2)}</td><td>${fmt(db[k].pct, 2)}</td><td class="${cls(da[k].pct - db[k].pct)}">${sgn(db[k].pct - da[k].pct)}</td></tr>`).join('') + `</table>`;
+    }
+    html += `<div style="height:6px"></div><hr style="border:0;border-top:1px solid var(--line)">`;
+  }
+  html += `<h3>Class</h3><h2>${esc(DS.classes[c])}</h2><div class="sub">#${c}${sup ? ' · ' + esc(sup) : ''} · ${fmtCount(A.row[c])} images${A.nRuns > 1 || B.nRuns > 1 ? ' per run' : ''}${S.dom !== 'all' ? ' in ' + esc(DS.domains[S.dom]) : ''}</div>
+    <div class="kv num" style="margin-top:8px">
+      <span class="k"><span class="tag a">A</span> accuracy</span><span>${fmt(accA, 2)}%</span>
+      <span class="k"><span class="tag b">B</span> accuracy</span><span>${fmt(accB, 2)}% <span class="${cls(accB - accA)}">(${sgn(accB - accA)})</span></span>
+      <span class="k">predicted as it</span><span>A ${fmtCount(A.col[c])} · B ${fmtCount(B.col[c])} <span class="sub">(${fmt(A.row[c] ? A.col[c] / A.row[c] : NaN, 2)}× / ${fmt(B.row[c] ? B.col[c] / B.row[c] : NaN, 2)}× its true count)</span></span>
+    </div>`;
+  // where its images go (row) and what lands in its column
+  const pick = (getA, getB, n) => {
+    const out = [];
+    for (let j = 0; j < K; j++) if (j !== c) { const a = getA(j), b = getB(j); if (a > 0 || b > 0) out.push({ c: j, a, b }); }
+    return out.sort((x, y) => Math.max(y.a, y.b) - Math.max(x.a, x.b)).slice(0, n);
+  };
+  const dest = pick(j => A.row[c] ? A.M[c * K + j] / A.row[c] * 100 : 0, j => B.row[c] ? B.M[c * K + j] / B.row[c] * 100 : 0, 12);
+  const src = pick(j => A.M[j * K + c], j => B.M[j * K + c], 12);
+  html += `<h3>Its images are predicted as (% of class)</h3>` +
+    (dest.length ? barRows(dest, Math.max(...dest.map(d => Math.max(d.a, d.b)))) : '<div class="empty">no errors</div>');
+  html += `<h3>Wrongly predicted as it, from (images)</h3>` +
+    (src.length ? barRows(src, Math.max(...src.map(d => Math.max(d.a, d.b)))).replace(/\.0</g, '<') : '<div class="empty">none</div>');
+  if (DS.domains.length > 1) {
+    const da = classByDomain(idsA, c), db = classByDomain(idsB, c);
+    html += `<h3>Accuracy by domain</h3><table class="mini num"><tr><th>domain</th><th>n</th><th>A</th><th>B</th><th>Δ</th></tr>` +
+      DS.domains.map((d, k) => `<tr${String(k) === String(S.dom) ? ' style="font-weight:650"' : ''}><td>${esc(d)}</td><td>${fmtCount(da[k].n)}</td><td>${fmt(da[k].acc, 1)}</td><td>${fmt(db[k].acc, 1)}</td><td class="${cls(db[k].acc - da[k].acc)}">${sgn(db[k].acc - da[k].acc, 1)}</td></tr>`).join('') + `</table>`;
+  }
+  html += `<p class="sub" style="margin-top:12px"><span class="tag a">A</span> ${esc(aName())} · <span class="tag b">B</span> ${esc(bName())}</p>`;
+  el.innerHTML = html;
+  el.querySelectorAll('.bars .nm, a.cls').forEach(n => n.onclick = () => selectClass(Number(n.dataset.c), true));
+  el.querySelectorAll('.bars .bb').forEach((n, k) => n.onclick = () => {
+    const j = Number(n.dataset.c), fromSrc = n.closest('.bars') !== el.querySelector('.bars');
+    selectCell(fromSrc ? j : c, fromSrc ? c : j, true);
+  });
+}
+
+// ------------------------------------------------------------------ summary
+function renderSummary() {
+  const A = D.A, B = D.B;
+  const domAcc = side => {  // mean over the side's runs of per-domain accuracy
+    const ids = runIds(side);
+    return DS.domains.map((_, d) => ids.reduce((s, id) => s + (MAN.runs[id].acc_domains[d] ?? NaN), 0) / ids.length);
+  };
+  const da = domAcc('a'), db = domAcc('b');
+  const avg = xs => xs.reduce((s, x) => s + x, 0) / xs.length;
+  const n = A.nRuns > 1 ? `${fmtCount(A.total)} images per run (${A.nRuns} runs)` : `${fmtCount(A.total)} images`;
+  const seedTxt = side => { const s = runSeeds(side); return s.length > 1 ? `seeds ${s.join(',')} pooled` : `seed ${s[0]}`; };
+  let html = `
+    <div class="tile"><div class="s"><span class="tag a">A</span> ${esc(aName())} · ${seedTxt('a')}</div><div class="v num">${fmt(A.acc, 2)}%</div></div>
+    <div class="tile"><div class="s"><span class="tag b">B</span> ${esc(bName())} · ${seedTxt('b')}</div><div class="v num">${fmt(B.acc, 2)}%</div></div>
+    <div class="tile"><div class="s">B − A${S.dom === 'all' ? ' (sample-weighted)' : ''}</div><div class="v num ${cls(B.acc - A.acc)}">${sgn(B.acc - A.acc)}</div>
+      <div class="s">${S.dom === 'all' && DS.domains.length > 1 ? 'domain-avg ' + fmt(avg(da), 2) + ' → ' + fmt(avg(db), 2) + ' (' + sgn(avg(db) - avg(da)) + ')' : esc(S.dom === 'all' ? DS.domains[0] : DS.domains[S.dom])}</div></div>
+    <div class="tile"><div class="s">${K} classes${S.dom !== 'all' ? ' · ' + esc(DS.domains[S.dom]) : ''}</div><div class="v num" style="font-size:15px;margin-top:4px">${n}</div></div>`;
+  if (DS.domains.length > 1) {
+    html += `<div class="domains"><table class="num"><tr><th>domain</th>${DS.domains.map((d, k) => `<th style="cursor:pointer" data-d="${k}">${esc(d)}</th>`).join('')}<th>avg</th></tr>
+      <tr class="dom"><td>A</td>${da.map(x => `<td>${fmt(x, 1)}</td>`).join('')}<td>${fmt(avg(da), 2)}</td></tr>
+      <tr class="dom"><td>B</td>${db.map(x => `<td>${fmt(x, 1)}</td>`).join('')}<td>${fmt(avg(db), 2)}</td></tr>
+      <tr class="dom"><td>Δ</td>${db.map((x, k) => `<td class="${cls(x - da[k])}">${sgn(x - da[k], 1)}</td>`).join('')}<td class="${cls(avg(db) - avg(da))}">${sgn(avg(db) - avg(da))}</td></tr></table>
+      <div class="hint">click a domain to filter</div></div>`;
+  }
+  $('summary').innerHTML = html;
+  $('summary').querySelectorAll('th[data-d]').forEach(th => {
+    if (th.dataset.d === String(S.dom)) th.style.color = 'var(--accent)';
+    th.onclick = () => { S.dom = S.dom === th.dataset.d ? 'all' : th.dataset.d; $('dom').value = S.dom; refresh(); };
+  });
+}
+function renderMethods() {
+  const card = side => {
+    const v = VARS.find(x => x.key === S[side].v);
+    if (!v) return '';
+    const d = describeRun(v.algo, MAN.runs[Object.values(v.seeds)[0]]);
+    return `<div class="m"><div class="hd"><span class="tag ${side}">${side.toUpperCase()}</span><span class="nm">${esc(v.algo)}</span>` +
+      (d.kind ? `<span class="kind ${d.kind}">${esc(KINDS[d.kind])}</span>` : '') + `</div>
+      <div class="tx">${esc(d.text)}</div><div class="st">${esc(d.setting)}${d.src ? ` · <code>${esc(d.src)}</code>` : ''}</div>` +
+      (d.ramen && v.algo !== 'Ramen' ? `<details><summary>what Ramen does</summary>${esc(RAMEN)}</details>` : '') + `</div>`;
+  };
+  $('methods').innerHTML = card('a') + card('b');
+}
+function renderLegend() {
+  const r = LUT.r, g = stops => `linear-gradient(90deg, ${stops.join(',')})`;
+  const unit = S.norm === 'row' ? '%' : '';
+  const lim = x => S.norm === 'row' ? fmt(x, x < 10 ? 2 : 1) + unit : fmtCount(x);
+  let html;
+  if (S.view === 'diff') {
+    html = `<span class="ramp">B worse <i style="background:${g([...r.bad].reverse().concat([r.mid], r.good))}"></i> B better</span>
+      <span>off-diagonal ±${lim(SCALE.off)} · diagonal ±${lim(SCALE.diag)}</span>
+      <span class="hint">blue = more correct / fewer of that confusion under B</span>`;
+  } else {
+    html = `<span class="ramp">errors <i style="background:${g(r.off)}"></i> ${lim(SCALE.off)}</span>
+      <span class="ramp">correct (diagonal) <i style="background:${g(r.diag)}"></i> ${lim(SCALE.diag)}</span>
+      <span class="hint">empty = never predicted · showing ${S.view === 'A' ? '<span class="tag a">A</span>' : '<span class="tag b">B</span>'}</span>`;
+  }
+  if (N < K) html += `<span class="hint">${N} of ${K} classes, ${esc(RANKS[S.rank])}${S.view === 'diff' ? ' (change B − A)' : ` in ${S.view}`} ·
+    ${fmt(COVER, COVER < 10 ? 1 : 0)}% of ${S.view === 'diff' ? 'the changed' : 'the'} errors fall between them</span>`;
+  $('legend').innerHTML = html;
+}
+
+// ------------------------------------------------------------------ tables
+function pairsData() {
+  const A = D.A, B = D.B, out = [];
+  for (let i = 0; i < K; i++) for (let j = 0; j < K; j++) {
+    if (i === j) continue;
+    const q = i * K + j, a = A.M[q], b = B.M[q];
+    if (!a && !b) continue;
+    const pa = A.row[i] ? a / A.row[i] * 100 : NaN, pb = B.row[i] ? b / B.row[i] * 100 : NaN;
+    out.push({ i, j, a, b, pa, pb, d: pb - pa, dn: b - a });
+  }
+  return out;
+}
+function classesData() {
+  const A = D.A, B = D.B, out = [];
+  for (let c = 0; c < K; c++) {
+    if (!A.row[c] && !B.row[c]) continue;
+    const aa = accOf(A, c), ab = accOf(B, c);
+    out.push({ c, n: A.row[c], aa, ab, d: ab - aa, xa: A.row[c] ? A.col[c] / A.row[c] : NaN, xb: B.row[c] ? B.col[c] / B.row[c] : NaN,
+      g: DS.superclasses ? DS.superclasses[DS.classes[c]] || '' : '' });
+  }
+  return out;
+}
+const COLS = {
+  pairs: [['t', 'true → predicted', 1], ['a', 'A images', -1], ['pa', 'A % of class', -1], ['b', 'B images', -1], ['pb', 'B % of class', -1],
+          ['d', 'Δ % (B−A)', -1], ['dn', 'Δ images', -1]],
+  classes: [['t', 'class', 1], ['n', 'images', -1], ['aa', 'A acc %', 1], ['ab', 'B acc %', 1], ['d', 'Δ acc', 1],
+            ['xa', 'A pred / true', -1], ['xb', 'B pred / true', -1]],
+};
+let TABLE_ROWS = [];
+function renderTable() {
+  const tab = S.tab, cols = COLS[tab].slice();
+  if (tab === 'classes' && DS.superclasses) cols.splice(1, 0, ['g', 'group', 1]);
+  const [key, dir] = S.sort[tab];
+  let rows = tab === 'pairs' ? pairsData() : classesData();
+  const f = S.filter.trim().toLowerCase();
+  if (f) rows = rows.filter(r => tab === 'pairs' ? (DS.classes[r.i].toLowerCase().includes(f) || DS.classes[r.j].toLowerCase().includes(f))
+    : (DS.classes[r.c].toLowerCase().includes(f) || r.g.toLowerCase().includes(f)));
+  const total = rows.length;
+  const getv = (r, k) => k === 't' ? (tab === 'pairs' ? DS.classes[r.i] + ' ' + DS.classes[r.j] : DS.classes[r.c]) : r[k];
+  rows.sort((x, y) => {
+    const a = getv(x, key), b = getv(y, key);
+    if (typeof a === 'string') return dir * a.localeCompare(b);
+    const na = Number.isNaN(a), nb = Number.isNaN(b);
+    return (na - nb) || dir * (a - b) || (tab === 'pairs' ? y.b - x.b : x.c - y.c);
+  });
+  rows = rows.slice(0, 400);
+  TABLE_ROWS = rows;
+  const head = `<thead><tr>${cols.map(([k, t]) => `<th class="${k === 't' || k === 'g' ? 't' : 'n'}${k === key ? ' sorted' : ''}" data-k="${k}">${t}${k === key ? (dir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead>`;
+  const cell = (r, k) => {
+    switch (k) {
+      case 't': return tab === 'pairs' ? `<td class="t" title="${esc(DS.classes[r.i])} → ${esc(DS.classes[r.j])}">${esc(DS.classes[r.i])} → ${esc(DS.classes[r.j])}</td>`
+                                       : `<td class="t" title="${esc(DS.classes[r.c])}">${esc(DS.classes[r.c])}</td>`;
+      case 'g': return `<td class="t">${esc(r.g)}</td>`;
+      case 'a': case 'b': case 'n': return `<td class="n">${fmtCount(r[k])}</td>`;
+      case 'pa': case 'pb': return `<td class="n">${fmt(r[k], 2)}</td>`;
+      case 'aa': case 'ab': return `<td class="n">${fmt(r[k], 1)}</td>`;
+      case 'd': return `<td class="n ${cls(tab === 'pairs' ? -r.d : r.d)}">${sgn(r.d, tab === 'pairs' ? 2 : 1)}</td>`;
+      case 'dn': return `<td class="n ${cls(-r.dn)}">${sgn(r.dn, 1).replace(/\.0$/, '')}</td>`;
+      case 'xa': case 'xb': return `<td class="n">${fmt(r[k], 2)}×</td>`;
+    }
+  };
+  const body = `<tbody>${rows.map((r, k) => `<tr data-k="${k}">${cols.map(([c]) => cell(r, c)).join('')}</tr>`).join('')}</tbody>`;
+  $('list').innerHTML = head + body;
+  $('list').querySelectorAll('th').forEach(th => th.onclick = () => {
+    const k = th.dataset.k, def = COLS[tab].concat([['g', '', 1]]).find(c => c[0] === k)[2];
+    S.sort[tab] = [k, S.sort[tab][0] === k ? -S.sort[tab][1] : def]; renderTable();
+  });
+  $('list').querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => {
+    const r = TABLE_ROWS[Number(tr.dataset.k)];
+    if (tab === 'pairs') selectCell(r.i, r.j, true); else selectClass(r.c, true);
+  });
+  $('listfoot').textContent = `${total.toLocaleString()} ${tab === 'pairs' ? 'off-diagonal cells with at least one image under A or B' : 'classes'}` +
+    (total > 400 ? ' · showing the first 400 in this order' : '') + (D.A.nRuns > 1 || D.B.nRuns > 1 ? ' · counts are means per run' : '') +
+    ` · ${S.dom === 'all' ? 'all domains' : DS.domains[S.dom]}`;
+  $('tabhint').textContent = tab === 'pairs' ? 'click a column to sort · click a row to zoom to that cell' : 'pred / true > 1: over-predicted (a sink) · click a row to select the class';
+  markRows();
+}
+function markRows() {
+  $('list').querySelectorAll('tbody tr').forEach(tr => {
+    const r = TABLE_ROWS[Number(tr.dataset.k)];
+    const on = S.tab === 'pairs' ? (S.cell && r.i === S.cell[0] && r.j === S.cell[1]) : r.c === S.sel;
+    tr.classList.toggle('on', !!on);
+  });
+}
+
+// ------------------------------------------------------------------ controls
+function seg(id, key, cb) {
+  const el = $(id);
+  el.querySelectorAll('button').forEach(b => b.onclick = () => { S[key] = b.dataset.v; syncSeg(); cb(); });
+}
+function syncSeg() {
+  for (const [id, key] of [['view', 'view'], ['norm', 'norm'], ['tab', 'tab']])
+    $(id).querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S[key]));
+}
+function fillVariant(sel, side) {
+  const groups = {};
+  for (const v of VARS) (groups[v.mode] = groups[v.mode] || []).push(v);
+  sel.innerHTML = Object.entries(groups).map(([mode, vs]) => `<optgroup label="${esc(mode)} stream">` +
+    vs.map(v => `<option value="${esc(v.key)}" title="${esc(describeRun(v.algo, MAN.runs[Object.values(v.seeds)[0]]).text)}">${esc(v.label)}${Object.keys(v.seeds).length > 1 ? ` [${Object.keys(v.seeds).length} seeds]` : ''}</option>`).join('') +
+    `</optgroup>`).join('');
+  sel.value = S[side].v;
+}
+function fillSeed(sel, side) {
+  const v = VARS.find(x => x.key === S[side].v), seeds = Object.keys(v.seeds).sort((a, b) => a - b);
+  if (S[side].seed !== 'pooled' && !v.seeds[S[side].seed]) S[side].seed = seeds[0];
+  if (S[side].seed === 'pooled' && seeds.length < 2) S[side].seed = seeds[0];
+  sel.innerHTML = seeds.map(s => `<option value="${s}">seed ${s}</option>`).join('') +
+    (seeds.length > 1 ? `<option value="pooled">pooled (${seeds.length})</option>` : '');
+  sel.value = S[side].seed;
+}
+function fillTop() {
+  const ns = [10, 20, 30, 50, 100, 200].filter(n => n < K);
+  if (S.top !== 'all' && !ns.includes(Number(S.top))) S.top = 'all';
+  $('top').innerHTML = `<option value="all">all ${K}</option>` + ns.map(n => `<option value="${n}">top ${n}</option>`).join('');
+  $('top').value = S.top; $('top').disabled = !ns.length;
+  $('rank').innerHTML = Object.entries(RANKS).map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+  $('rank').value = S.rank; $('rank').disabled = S.top === 'all';
+}
+function fillOrder() {
+  const opts = [['index', 'dataset index'], ['name', 'name'], ...(DS.superclasses ? [['super', 'superclass groups']] : []),
+    ['cluster', 'confusion clusters'], ['accA', 'accuracy A (worst first)'], ['accB', 'accuracy B (worst first)'],
+    ['delta', 'Δ accuracy (hurt first)'], ['sinkB', 'over-predicted in B first']];
+  if (!opts.some(o => o[0] === S.order)) S.order = 'index';
+  $('order').innerHTML = opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+  $('order').value = S.order;
+}
+function pickDefaultVariants() {
+  const mixed = VARS.filter(v => v.mode === 'mixed');
+  const find = (algo, pool) => (pool.find(v => v.algo === algo) || {}).key;
+  if (!VARS.some(v => v.key === S.a.v)) S.a.v = find('NoAdapt', mixed) || find('NoAdapt', VARS) || VARS[0].key;
+  if (!VARS.some(v => v.key === S.b.v)) S.b.v = find('Ramen', mixed) || find('Ramen', VARS) || (VARS[1] || VARS[0]).key;
+}
+function setDataset(ds, keepSel) {
+  S.ds = ds; DS = MAN.datasets[ds]; K = DS.classes.length; VARS = variantsOf(ds);
+  mcache.clear();
+  pickDefaultVariants();
+  fillVariant($('aVar'), 'a'); fillVariant($('bVar'), 'b'); fillSeed($('aSeed'), 'a'); fillSeed($('bSeed'), 'b');
+  $('dom').innerHTML = `<option value="all">all ${DS.domains.length > 1 ? DS.domains.length + ' domains' : ''}</option>` +
+    (DS.domains.length > 1 ? DS.domains.map((d, i) => `<option value="${i}">${esc(d)}</option>`).join('') : '');
+  if (S.dom !== 'all' && !(Number(S.dom) < DS.domains.length)) S.dom = 'all';
+  $('dom').value = S.dom; $('dom').disabled = DS.domains.length < 2;
+  $('classlist').innerHTML = DS.classes.map(c => `<option value="${esc(c)}">`).join('');
+  fillOrder(); fillTop();
+  if (!keepSel) { S.sel = null; S.cell = null; }
+  if (S.sel != null && S.sel >= K) { S.sel = null; S.cell = null; }
+  V.fit = 0; N = 0;
+  layoutCanvas();
+}
+
+let refreshing = 0;
+async function refresh(opts = {}) {
+  const ticket = ++refreshing;
+  const ids = [...new Set([...runIds('a'), ...runIds('b')])];
+  const missing = ids.filter(id => !CMX.runs[id]);
+  if (missing.length) $('status').textContent = `loading ${missing.length} run${missing.length > 1 ? 's' : ''}…`;
+  try { await Promise.all(ids.map(loadRun)); }
+  catch (e) { $('status').textContent = String(e.message || e); return; }
+  if (ticket !== refreshing) return;
+  $('status').textContent = '';
+  const t0 = performance.now();
+  derive(); renderLegend(); renderSummary(); renderMethods();
+  noteHidden();
+  if (opts.zoomSel && S.sel != null && INV[S.cell ? S.cell[0] : S.sel] >= 0 && INV[S.cell ? S.cell[1] : S.sel] >= 0) centerOn(INV[S.cell ? S.cell[0] : S.sel], INV[S.cell ? S.cell[1] : S.sel], side / 30);
+  draw(); renderSide(); renderTable(); saveHash();
+  const ms = performance.now() - t0;
+  if (ms > 400) $('status').textContent = `computed in ${Math.round(ms)} ms`;
+}
+
+$('ds').innerHTML = Object.keys(MAN.datasets).sort().map(d => {
+  const n = Object.values(MAN.runs).filter(r => r.dataset === d).length;
+  return `<option value="${esc(d)}">${esc(d)} (${MAN.datasets[d].classes.length} classes, ${n} runs)</option>`;
+}).join('');
+$('ds').onchange = () => { S.a.v = S.b.v = null; S.dom = 'all'; setDataset($('ds').value); refresh(); };
+$('aVar').onchange = () => { S.a.v = $('aVar').value; fillSeed($('aSeed'), 'a'); refresh(); };
+$('bVar').onchange = () => { S.b.v = $('bVar').value; fillSeed($('bSeed'), 'b'); refresh(); };
+$('aSeed').onchange = () => { S.a.seed = $('aSeed').value; refresh(); };
+$('bSeed').onchange = () => {
+  S.b.seed = $('bSeed').value;
+  // keep A on the same seed when it has it (NoAdapt has seed 0 only and is stateless, so it stays)
+  const va = VARS.find(x => x.key === S.a.v);
+  if (S.b.seed === 'pooled' ? Object.keys(va.seeds).length > 1 : va.seeds[S.b.seed]) { S.a.seed = S.b.seed; $('aSeed').value = S.a.seed; }
+  refresh();
+};
+$('swap').onclick = () => { [S.a, S.b] = [S.b, S.a]; fillVariant($('aVar'), 'a'); fillVariant($('bVar'), 'b'); fillSeed($('aSeed'), 'a'); fillSeed($('bSeed'), 'b'); refresh(); };
+$('dom').onchange = () => { S.dom = $('dom').value; refresh(); };
+$('order').onchange = () => { S.order = $('order').value; fitView(); refresh(); };
+$('top').onchange = () => { S.top = $('top').value; $('rank').disabled = S.top === 'all'; refresh(); };
+$('rank').onchange = () => { S.rank = $('rank').value; refresh(); };
+$('gamma').oninput = () => { S.gamma = Number($('gamma').value); derive(); renderLegend(); draw(); saveHashSoon(); };
+$('find').onchange = $('find').oninput = ev => {
+  const q = $('find').value.trim().toLowerCase(); if (!q) return;
+  let c = DS.classes.findIndex(x => x.toLowerCase() === q);
+  if (c < 0 && q.length > 2 && ev.type === 'change') c = DS.classes.findIndex(x => x.toLowerCase().includes(q));
+  if (c >= 0) selectClass(c, true);
+};
+$('filter').oninput = () => { S.filter = $('filter').value; renderTable(); };
+seg('view', 'view', () => { derive(); renderLegend(); noteHidden(); draw(); saveHash(); });
+seg('norm', 'norm', () => { derive(); renderLegend(); noteHidden(); draw(); renderSide(); saveHash(); });
+seg('tab', 'tab', () => { renderTable(); saveHash(); });
+darkMQ.addEventListener('change', () => { buildLuts(); levels = new Map(); if (D) { derive(); renderLegend(); draw(); } });
+let rsz; window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { layoutCanvas(); draw(); }, 120); });
+
+// ------------------------------------------------------------------ URL state (shareable views)
+let hashT;
+function saveHashSoon() { clearTimeout(hashT); hashT = setTimeout(saveHash, 300); }
+function saveHash() {
+  const p = new URLSearchParams({ ds: S.ds, a: S.a.v, as: S.a.seed, b: S.b.v, bs: S.b.seed, d: S.dom, v: S.view, n: S.norm, o: S.order, k: S.top, r: S.rank, g: S.gamma, t: S.tab });
+  if (S.sel != null) p.set('c', S.sel);
+  if (S.cell) p.set('cell', S.cell.join(','));
+  history.replaceState(null, '', '#' + p.toString());
+}
+function loadHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  const ds = p.get('ds') && MAN.datasets[p.get('ds')] ? p.get('ds') : (MAN.datasets.ImageNetC5K ? 'ImageNetC5K' : Object.keys(MAN.datasets).sort()[0]);
+  S.a.v = p.get('a'); S.b.v = p.get('b'); S.a.seed = p.get('as') || '0'; S.b.seed = p.get('bs') || '0';
+  S.dom = p.get('d') || 'all'; S.view = p.get('v') || 'diff'; S.norm = p.get('n') || 'row';
+  S.order = p.get('o') || 'index'; S.top = p.get('k') || 'all'; S.rank = RANKS[p.get('r')] ? p.get('r') : 'pairs'; S.gamma = Number(p.get('g')) || 0.5; S.tab = p.get('t') || 'pairs';
+  S.sel = p.has('c') ? Number(p.get('c')) : null;
+  S.cell = p.has('cell') ? p.get('cell').split(',').map(Number) : null;
+  $('ds').value = ds; $('gamma').value = S.gamma;
+  setDataset(ds, true);
+}
+
+buildLuts();
+syncSeg();
+loadHash();
+syncSeg();
+refresh({ zoomSel: S.sel != null });
+</script>
+</body>
+</html>

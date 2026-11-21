@@ -1,0 +1,14 @@
+{
+ "csls": {
+  "kappa": 100,
+  "beta": 0.5
+ },
+ "inverted softmax": {
+  "tau": 50.0
+ },
+ "permuted csls": {
+  "kappa": 100,
+  "beta": 0.5
+ },
+ "centring": {}
+}

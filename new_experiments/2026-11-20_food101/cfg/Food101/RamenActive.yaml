@@ -1,0 +1,15 @@
+# Same cache and prompt as Ramen.yaml (copied from cfg/ImageNetVariants/RamenActive.yaml with CIFAR100C's cache settings)
+max_capacity: 750
+topk: 5
+beta: 5.0
+
+optimizer: signsgd
+lr: 0.01
+
+templates: ["a photo of {}, a type of food."]
+
+# all (== Ramen) | topm | prob (weighted by softmax(zero-shot logits / temperature)); see src/methods/RamenActive.py
+active_set: all
+top_m: 5
+temperature: 1.0
+log_support: 8

@@ -99,7 +99,8 @@ class IdCache(PriorityCache):
     def query(self, queries, topk):
         """As PriorityCache.query, plus the stream ids of the retrieved entries."""
         topk = min(topk, self.size)
-        dist = torch.cdist(queries.detach().to(device=self.device, dtype=self.dtype), self.keys[:self.size])
+        dist = torch.cdist(queries.detach().to(device=self.device, dtype=self.dtype), self.keys[:self.size],
+                           compute_mode='use_mm_for_euclid_dist')  # fp16-safe, same as default for > 25 rows (Ramen.py)
         sorted_dist, idx = torch.topk(dist, k=topk, dim=1, largest=False, sorted=True)
         return self.values[idx], self.entropies[idx], sorted_dist, self.ids[idx]
 
@@ -122,7 +123,7 @@ class RamenActive(Ramen):
         self.cache = None  # free Ramen's queues first: both at once need 2 x 8 GB on DomainNet
         torch.cuda.empty_cache()
         self.cache = [IdCache(max_capacity=self.cfg['max_capacity'], key_dim=self.feat_dim, value_dim=self.grad_dim,
-                              device=self.device, dtype=self.dtype)
+                              device=self.device, dtype=self.dtype, priority_dtype=self.priority_dtype)
                       for _ in range(self.num_classes)]
         self.seen = 0  # stream position of the next sample; unlike self.counter it is not reset between streams
         self.stats = {'active_set': name, 'filed_as': [], 'support_ids': [], 'support_weight': []}
@@ -134,7 +135,7 @@ class RamenActive(Ramen):
         """Ramen's write: every sample, before retrieval, into the queue of its zero-shot prediction."""
         B = feats.shape[0]
         zs_pred = zs_logits.argmax(-1)
-        priorities = torch.arange(self.counter, self.counter + B, device=self.device, dtype=self.dtype)
+        priorities = torch.arange(self.counter, self.counter + B, device=self.device, dtype=self.priority_dtype)
         entropies = softmax_entropy(zs_logits, reduction='none')
         self.counter = self.counter + B
         for b in range(B):

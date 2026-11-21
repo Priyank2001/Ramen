@@ -3,7 +3,7 @@
 .ipynb_checkpoints/
 
 # Experiment outputs (~10 GB of .pkl/.npy) — keep on disk, not in git
-new_experiments/results/
+new_experiments/results
 *.pkl
 *.npy
 *.pt
@@ -25,3 +25,12 @@ report/*.aux
 report/*.log
 report/*.out
 report/build.log
+
+# Per-experiment result arrays and run logs/queues — keep on disk, not in git
+*.npz
+new_experiments/**/logs/
+*.lock
+
+# Scratch
+temp/
+/output.png
