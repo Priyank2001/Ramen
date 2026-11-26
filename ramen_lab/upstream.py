@@ -25,6 +25,8 @@ if str(SRC) not in sys.path:
 
 import datasets as _datasets  # noqa: E402  (upstream src/datasets)
 import methods as _methods  # noqa: E402  (upstream src/methods)
+from methods import losses as _losses  # noqa: E402  (upstream src/methods/losses.py)
+from models import ModelForBySampleTTA as _by_sample  # noqa: E402  (upstream src/models/ModelForBySampleTTA.py)
 from models import get_pretrained_model as _models  # noqa: E402  (upstream src/models)
 
 
@@ -34,8 +36,10 @@ def _check_is_upstream(module: ModuleType) -> None:
         raise ImportError(f"{module.__name__} resolved to {origin}, not to upstream {SRC}: a package name clash")
 
 
-for _module in (_datasets, _methods, _models):
+for _module in (_datasets, _methods, _losses, _by_sample, _models):
     _check_is_upstream(_module)
+
+softmax_entropy = _losses.softmax_entropy  # upstream's entropy (Ramen's loss and memory weight)
 
 UPSTREAM_METHODS = ("NoAdapt", "Tent", "Ramen")
 
@@ -68,6 +72,27 @@ _patch_small_batch_cdist()
 def method_class(name: str) -> type:
     """An upstream TTA method class (NoAdapt, Tent, Ramen)."""
     return _methods.get_method_class(name)
+
+
+def by_sample_clip_model(model: torch.nn.Module, class_names: Any, cfg: Dict[str, Any], args: SimpleNamespace) -> Any:
+    """Upstream's CLIPModelForBySampleTTA, built exactly as `Ramen.__init__` builds it (per-sample LayerNorm affine copies,
+    SignSGD over them). Replaces the LayerNorms of `model` in place."""
+    return _by_sample.CLIPModelForBySampleTTA(model, class_names, cfg, args)
+
+
+@torch.no_grad()
+def rearm_by_sample_grads(by_sample_model: Any, batch_size: int) -> None:
+    """Make a by-sample model ready for another `set_by_sample_grad` + step on the same batch, as if a backward had just
+    run. Needed because `reset_parameters()` clears `recent_B` and the optimizer's `zero_grad()` (torch 2.x default
+    set_to_none) drops the grad tensors; rows >= batch_size get zero gradient, exactly what a backward leaves there."""
+    for module in by_sample_model.model.modules():
+        if isinstance(module, (_by_sample.BySampleLayerNorm, _by_sample.BySampleBatchNorm)):
+            module.recent_B = batch_size
+            for param in (module.weight_by_sample, module.bias_by_sample):
+                if param.grad is None:
+                    param.grad = torch.zeros_like(param)
+                else:
+                    param.grad.zero_()
 
 
 def load_model(backbone: str, device: torch.device) -> Tuple[torch.nn.Module, Any]:
