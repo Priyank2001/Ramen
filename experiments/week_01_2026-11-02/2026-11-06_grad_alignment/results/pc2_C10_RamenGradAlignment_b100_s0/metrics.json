@@ -1,0 +1,73 @@
+{
+  "run_id": "pc2_C10_RamenGradAlignment_b100_s0",
+  "date": "2026-11-06",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_01_2026-11-02/2026-11-06_grad_alignment/grad_alignment.py",
+  "config": {
+    "dataset": "CIFAR10C",
+    "method": "RamenGradAlignment",
+    "seed": 0,
+    "name": null,
+    "batch_size": 100,
+    "backbone": "clip_vitbase32",
+    "overrides": {
+      "beta": 5.0,
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "optimizer": "signsgd",
+      "probe_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C10_RamenGradAlignment_b100_s0/alignment.npz",
+      "topk": 50
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "optimizer": "signsgd",
+      "probe_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C10_RamenGradAlignment_b100_s0/alignment.npz",
+      "topk": 50
+    }
+  },
+  "metrics": {
+    "acc": 72.614,
+    "acc_micro": 72.614,
+    "per_domain": {
+      "gaussian_noise": 60.18,
+      "shot_noise": 62.92,
+      "impulse_noise": 56.22,
+      "defocus_blur": 77.08,
+      "glass_blur": 64.24,
+      "motion_blur": 77.48,
+      "zoom_blur": 78.76,
+      "snow": 80.92,
+      "frost": 80.09,
+      "fog": 78.1,
+      "brightness": 88.11,
+      "contrast": 79.93,
+      "elastic_transform": 72.25,
+      "pixelate": 65.6,
+      "jpeg_compression": 67.33
+    },
+    "n_samples": 150000,
+    "n_correct": 108921
+  },
+  "baseline_run_id": "pc2_CIFAR10C_Ramen_s0",
+  "raw_outputs": [
+    "experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C10_RamenGradAlignment_b100_s0/records.npz"
+  ],
+  "resources": {
+    "peak_ram_gb": 6.75,
+    "ram_budget_gb": 8.2,
+    "min_system_available_gb": 109.5,
+    "peak_gpu_allocated_gb": 7.78,
+    "peak_gpu_reserved_gb": 9.84,
+    "minutes": 4.71
+  }
+}

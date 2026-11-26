@@ -1,0 +1,73 @@
+{
+  "run_id": "pc2_C100_RamenGradAlignment_b32_s0",
+  "date": "2026-11-06",
+  "machine": "pc2",
+  "gpu": "RTX 2080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_01_2026-11-02/2026-11-06_grad_alignment/grad_alignment.py",
+  "config": {
+    "dataset": "CIFAR100C",
+    "method": "RamenGradAlignment",
+    "seed": 0,
+    "name": null,
+    "batch_size": 32,
+    "backbone": "clip_vitbase16",
+    "overrides": {
+      "beta": 5.0,
+      "lr": 0.01,
+      "max_capacity": 750,
+      "optimizer": "signsgd",
+      "probe_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C100_RamenGradAlignment_b32_s0/alignment.npz",
+      "topk": 5
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "lr": 0.01,
+      "max_capacity": 750,
+      "optimizer": "signsgd",
+      "probe_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C100_RamenGradAlignment_b32_s0/alignment.npz",
+      "topk": 5
+    }
+  },
+  "metrics": {
+    "acc": 46.0367,
+    "acc_micro": 46.0367,
+    "per_domain": {
+      "gaussian_noise": 30.08,
+      "shot_noise": 32.64,
+      "impulse_noise": 43.11,
+      "defocus_blur": 52.55,
+      "glass_blur": 28.8,
+      "motion_blur": 52.15,
+      "zoom_blur": 55.31,
+      "snow": 54.95,
+      "frost": 54.85,
+      "fog": 52.55,
+      "brightness": 65.81,
+      "contrast": 51.04,
+      "elastic_transform": 36.71,
+      "pixelate": 40.42,
+      "jpeg_compression": 39.58
+    },
+    "n_samples": 150000,
+    "n_correct": 69055
+  },
+  "baseline_run_id": "pc2_CIFAR100C_Ramen_s0",
+  "raw_outputs": [
+    "experiments/week_01_2026-11-02/2026-11-06_grad_alignment/results/pc2_C100_RamenGradAlignment_b32_s0/records.npz"
+  ],
+  "resources": {
+    "peak_ram_gb": 5.79,
+    "ram_budget_gb": 13.0,
+    "min_system_available_gb": 109.5,
+    "peak_gpu_allocated_gb": 8.26,
+    "peak_gpu_reserved_gb": 8.58,
+    "minutes": 26.56
+  }
+}
