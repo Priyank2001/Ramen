@@ -146,3 +146,15 @@ def test_stats():
     diff = np.r_[np.ones(50), np.zeros(50)]
     low, high = cluster_bootstrap(diff, np.zeros(100, int), np.arange(100))
     assert low < 50 < high
+
+
+# ---------------------------------------------------------------- held-out domains (docs/plans/grad_mix.md)
+def test_heldout_config_gets_its_own_run_id_and_main_keeps_the_old_config_dict():
+    main = RunConfig.make("CIFAR10C", batch_size=64)
+    held = RunConfig.make("CIFAR10C", batch_size=64, domains="heldout")
+    assert main.run_id("pc2") == "pc2_C10_Ramen_b64_s0" and "domains" not in main.to_dict()
+    assert held.run_id("pc2") == "pc2_C10_Ramen_b64_s0_heldout" and held.to_dict()["domains"] == "heldout"
+    for bad in ({"dataset": "DomainNet", "batch_size": 8, "domains": "heldout"},
+                {"dataset": "CIFAR10C", "batch_size": 8, "domains": "extra"}):
+        with pytest.raises(ValueError):
+            RunConfig(**bad)

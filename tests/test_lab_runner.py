@@ -46,7 +46,7 @@ class FakeDomains:
 
 FAKE = FakeDomains()
 ADAPTER = SimpleNamespace(seed_everything=upstream.seed_everything, load_model=upstream.load_model,
-                          load_datasets=lambda name, root, transform: FAKE,
+                          load_datasets=lambda name, root, transform, domains="main": FAKE,
                           load_method_config=lambda dataset, algo: (dict(SMALL_RAMEN) if algo == "Ramen"
                                                                     else upstream.load_method_config(dataset, "NoAdapt")),
                           method_args=upstream.method_args)
