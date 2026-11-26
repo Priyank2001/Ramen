@@ -20,3 +20,4 @@ def uses_labels(method: object) -> bool:
 
 
 from ramen_lab.methods import grad_alignment  # noqa: E402,F401  (registers RamenGradAlignment)
+from ramen_lab.methods import oracle_fill  # noqa: E402,F401  (registers RamenFileByLabel)
