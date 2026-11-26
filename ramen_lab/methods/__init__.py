@@ -17,3 +17,6 @@ for _name in upstream.UPSTREAM_METHODS:
 def uses_labels(method: object) -> bool:
     """True only for ORACLE methods, which declare it explicitly."""
     return bool(getattr(method, "uses_labels", False))
+
+
+from ramen_lab.methods import grad_alignment  # noqa: E402,F401  (registers RamenGradAlignment)
