@@ -1,0 +1,62 @@
+{
+  "run_id": "pc2_C100_NoAdapt_b32_s1",
+  "date": "2026-11-04",
+  "machine": "pc2",
+  "gpu": "RTX 2080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": false,
+  "backfilled": false,
+  "script": "experiments/week_01_2026-11-02/2026-11-01_baseline/baseline.py",
+  "config": {
+    "dataset": "CIFAR100C",
+    "method": "NoAdapt",
+    "seed": 1,
+    "name": null,
+    "batch_size": 32,
+    "backbone": "clip_vitbase16",
+    "overrides": {},
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "optimizer": "signsgd",
+      "lr": 1e-09
+    }
+  },
+  "metrics": {
+    "acc": 37.086,
+    "acc_micro": 37.086,
+    "per_domain": {
+      "gaussian_noise": 22.91,
+      "shot_noise": 24.33,
+      "impulse_noise": 29.53,
+      "defocus_blur": 43.6,
+      "glass_blur": 20.08,
+      "motion_blur": 43.61,
+      "zoom_blur": 48.64,
+      "snow": 48.92,
+      "frost": 50.41,
+      "fog": 41.77,
+      "brightness": 58.12,
+      "contrast": 35.28,
+      "elastic_transform": 29.2,
+      "pixelate": 26.31,
+      "jpeg_compression": 33.58
+    },
+    "n_samples": 150000,
+    "n_correct": 55629
+  },
+  "baseline_run_id": null,
+  "raw_outputs": [
+    "experiments/week_01_2026-11-02/2026-11-01_baseline/results/pc2_C100_NoAdapt_b32_s1/records.npz"
+  ],
+  "resources": {
+    "peak_ram_gb": 5.56,
+    "ram_budget_gb": 13.0,
+    "min_system_available_gb": 109.7,
+    "peak_gpu_allocated_gb": 0.51,
+    "peak_gpu_reserved_gb": 0.63,
+    "minutes": 4.35
+  }
+}

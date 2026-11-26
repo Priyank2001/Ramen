@@ -1,0 +1,53 @@
+{
+  "run_id": "pc2_DN_NoAdapt_b32_s1",
+  "date": "2026-11-04",
+  "machine": "pc2",
+  "gpu": "RTX 2080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": false,
+  "backfilled": false,
+  "script": "experiments/week_01_2026-11-02/2026-11-01_baseline/baseline.py",
+  "config": {
+    "dataset": "DomainNet",
+    "method": "NoAdapt",
+    "seed": 1,
+    "name": null,
+    "batch_size": 32,
+    "backbone": "clip_vitbase32",
+    "overrides": {},
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "optimizer": "signsgd",
+      "lr": 1e-09
+    }
+  },
+  "metrics": {
+    "acc": 55.7051,
+    "acc_micro": 52.8575,
+    "per_domain": {
+      "clipart": 68.9169,
+      "infograph": 44.4337,
+      "painting": 64.8991,
+      "quickdraw": 13.3235,
+      "real": 82.3073,
+      "sketch": 60.3504
+    },
+    "n_samples": 586575,
+    "n_correct": 310049
+  },
+  "baseline_run_id": null,
+  "raw_outputs": [
+    "experiments/week_01_2026-11-02/2026-11-01_baseline/results/pc2_DN_NoAdapt_b32_s1/records.npz"
+  ],
+  "resources": {
+    "peak_ram_gb": 4.4,
+    "ram_budget_gb": 9.0,
+    "min_system_available_gb": 112.5,
+    "peak_gpu_allocated_gb": 0.43,
+    "peak_gpu_reserved_gb": 0.52,
+    "minutes": 14.77
+  }
+}
