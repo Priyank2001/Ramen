@@ -1,5 +1,5 @@
 # Plan: grad_mix (mix Ramen's active-set gradient with the image's own entropy gradient)
-*2026-11-27. Status: draft. Method variant (label-free).*
+*2026-11-27. Status: running. Held-out sweep done; lambda* = GradMixUnit90 (lambda 0.9, unit mix), selected by the pre-registered rule from `results/pc2_C10_*_heldout/metrics.json` before its test-stream run finished. Test-stream gate pending. Method variant (label-free).*
 
 ## Question and hypothesis
 - **Question.** If Ramen steps on a mix of its aggregated active-set gradient and the current image's own entropy gradient, G_i = lambda g_R(i) + (1 - lambda) g_H(i), is there a lambda < 1 that predicts better than Ramen (lambda = 1)?
@@ -62,6 +62,10 @@ Batch 100 (frozen), RAM budget 8.2 GB (frozen). Ramen CIFAR-10-C took about 5 mi
 - **Selection (held-out only).** lambda* = the variant with the highest held-out seed-0 accuracy among the 12. If lambda* is GradMix100 (Ramen), the direction stops here.
 - **Gate (test stream).** lambda* minus Ramen seed 0 (`pc2_C10_Ramen_b100_s0`) > 0.184 points. Pass: seeds 1-4 on the GPU model of each baseline seed, then ImageNet-C and DomainNet with lambda* unchanged (DomainNet has no extra domains; it is not re-tuned). Fail: stop, record in `docs/research_state.md`.
 - **Diagnostic only.** The test-stream curve over all lambda is reported, but no lambda other than lambda* is ever compared against Ramen as a result. Split of accuracy by zero-shot right / wrong, fixed / broken counts versus Ramen, and the logged norm ratio and sign-flip share are explanations, not gates.
+
+## Selection record (2026-11-27, written before the lambda* test-stream run finished)
+- Held-out seed 0, 12 variants + NoAdapt, all on the RTX 2080 Ti: highest accuracy GradMixUnit90, second GradMix100 (Ramen). Values: `experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_{GradMixUnit90,GradMix100}_b100_s0_heldout/metrics.json`.
+- There is no held-out noise floor (one seed), so the selection margin is not evidence of a gain by itself. The test-stream gate decides.
 
 ## Risks
 - Held-out stream never fills memory (derivation, failure 1).
