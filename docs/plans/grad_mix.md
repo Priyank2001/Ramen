@@ -1,5 +1,5 @@
 # Plan: grad_mix (mix Ramen's active-set gradient with the image's own entropy gradient)
-*2026-11-27. Status: running. Held-out sweep done; lambda* = GradMixUnit90 (lambda 0.9, unit mix), selected by the pre-registered rule from `results/pc2_C10_*_heldout/metrics.json` before its test-stream run finished. Test-stream gate pending. Method variant (label-free).*
+*2026-11-27. Status: done, gate FAILED (seed 0): lambda* = GradMixUnit90 (picked on held-out) is +0.11 over Ramen on the CIFAR-10-C test stream, below the 0.184 floor, 95% CI includes 0. Every other lambda < 1 is below Ramen. Direction stopped per the pre-registered rule. Notebook: `experiments/week_04_2026-11-23/2026-11-27_grad_mix/grad_mix.ipynb`. Method variant (label-free).*
 
 ## Question and hypothesis
 - **Question.** If Ramen steps on a mix of its aggregated active-set gradient and the current image's own entropy gradient, G_i = lambda g_R(i) + (1 - lambda) g_H(i), is there a lambda < 1 that predicts better than Ramen (lambda = 1)?

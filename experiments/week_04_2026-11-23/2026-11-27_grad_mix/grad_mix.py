@@ -307,3 +307,25 @@ def sanity_table(runs: Dict[str, Run]) -> List[Dict[str, Any]]:
                      "peak RAM (GB)": res.get("peak_ram_gb"), "RAM budget (GB)": res.get("ram_budget_gb"),
                      "peak GPU alloc (GB)": res.get("peak_gpu_allocated_gb"), "minutes": res.get("minutes")})
     return rows
+
+
+def data_table(runs: Dict[str, Run], reference: str) -> List[Dict[str, Any]]:
+    """Images and errors per domain for NoAdapt and `reference` (Ramen on the test stream, GradMix100 on held-out)."""
+    rec = runs[reference].records
+    rows = []
+    for d, name in enumerate(runs[reference].metrics["metrics"]["per_domain"]):
+        m = rec["domain_idx"] == d
+        row = {"domain": name, "images": f"{int(m.sum()):,}"}
+        for v in ("NoAdapt", reference):
+            err = int((~runs[v].correct[m]).sum())
+            row[f"{v} errors"] = f"{err:,} ({100 * err / m.sum():.1f}%)"
+        rows.append(row)
+    return rows
+
+
+def identity_row(runs: Dict[str, Run], a: str, b: str) -> Dict[str, Any]:
+    """Per-image prediction identity between two runs on the same stream."""
+    same = runs[a].records["pred"] == runs[b].records["pred"]
+    return {"runs": f"{runs[a].metrics['run_id']} vs {runs[b].metrics['run_id']}",
+            "identical predictions": f"{int(same.sum()):,} of {len(same):,} ({100 * same.mean():.2f}%)",
+            "GPUs": f"{runs[a].metrics.get('gpu')} / {runs[b].metrics.get('gpu')}"}

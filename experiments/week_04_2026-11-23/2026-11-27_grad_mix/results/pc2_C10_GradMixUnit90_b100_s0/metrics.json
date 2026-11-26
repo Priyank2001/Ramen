@@ -1,0 +1,78 @@
+{
+  "run_id": "pc2_C10_GradMixUnit90_b100_s0",
+  "date": "2026-11-27",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "1cbb44b",
+  "git_dirty": false,
+  "backfilled": false,
+  "script": "experiments/week_04_2026-11-23/2026-11-27_grad_mix/grad_mix.py",
+  "config": {
+    "dataset": "CIFAR10C",
+    "method": "RamenGradMix",
+    "seed": 0,
+    "name": "GradMixUnit90",
+    "batch_size": 100,
+    "backbone": "clip_vitbase32",
+    "overrides": {
+      "beta": 5.0,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "mix_lambda": 0.9,
+      "mix_norm": "unit",
+      "optimizer": "signsgd",
+      "topk": 50
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "mix_lambda": 0.9,
+      "mix_norm": "unit",
+      "optimizer": "signsgd",
+      "topk": 50
+    }
+  },
+  "metrics": {
+    "acc": 72.724,
+    "acc_micro": 72.724,
+    "per_domain": {
+      "gaussian_noise": 61.53,
+      "shot_noise": 63.43,
+      "impulse_noise": 56.69,
+      "defocus_blur": 77.86,
+      "glass_blur": 62.95,
+      "motion_blur": 76.04,
+      "zoom_blur": 78.36,
+      "snow": 81.18,
+      "frost": 81.04,
+      "fog": 79.24,
+      "brightness": 88.22,
+      "contrast": 80.04,
+      "elastic_transform": 71.73,
+      "pixelate": 65.0,
+      "jpeg_compression": 67.55
+    },
+    "n_samples": 150000,
+    "n_correct": 109086
+  },
+  "baseline_run_id": "pc2_C10_Ramen_b100_s0",
+  "raw_outputs": [
+    "experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0/records.npz"
+  ],
+  "notes": "label-free; lambda=0.9, mix=unit",
+  "resources": {
+    "peak_ram_gb": 7.83,
+    "ram_budget_gb": 10.0,
+    "min_system_available_gb": 113.9,
+    "peak_gpu_allocated_gb": 7.77,
+    "peak_gpu_reserved_gb": 9.81,
+    "minutes": 3.57
+  }
+}
