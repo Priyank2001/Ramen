@@ -40,7 +40,8 @@ TEST_CONFIGS = {"NoAdapt": upstream.load_method_config("CIFAR10C", "NoAdapt"),
                 "RamenStoredValue": {**SMALL_RAMEN, "stored_value": "ce_pseudo", "exclude_self": True},
                 "RamenStoredValueOracle": {**SMALL_RAMEN, "stored_value": "ce_true", "filing": "true_label",
                                            "exclude_self": True},  # ORACLE setting: the invariants hold for it too
-                "RamenGradMix": {**SMALL_RAMEN, "mix_lambda": 0.5, "mix_norm": "unit"}}  # a real mix, not identity
+                "RamenGradMix": {**SMALL_RAMEN, "mix_lambda": 0.5, "mix_norm": "unit"},  # a real mix, not identity
+                "RamenStepProbe": {**SMALL_RAMEN, "probe_etas": [0.0, 0.005, 0.01, 0.04]}}
 
 
 def test_config_for(name: str) -> dict:
