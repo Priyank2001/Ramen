@@ -10,6 +10,10 @@ from typing import Any, Dict, Optional, Tuple
 
 MAX_WORKERS = 4  # DataLoader worker cap (D17: each worker is a process holding its own copy of Python objects)
 TTA_MODES = ("mixed", "single")
+# main: the test domains (upstream default). heldout: only the extra corruptions upstream loads with extra=True
+# (src/datasets/corruption/utils.py:extra_corruptions), for tuning (AGENTS.md rule 8). Corruption sets only.
+DOMAIN_SETS = ("main", "heldout")
+HELDOUT_DATASETS = ("CIFAR10C", "CIFAR100C", "ImageNetC5K")
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,7 @@ class RunConfig:
     overrides: Tuple[Tuple[str, Any], ...] = field(default_factory=tuple)
     tta_mode: str = "mixed"
     n_per_domain: Optional[int] = None  # None: the full stream
+    domains: str = "main"  # DOMAIN_SETS
     num_workers: int = MAX_WORKERS
     data_root: str = "~/data"
 
@@ -57,6 +62,10 @@ class RunConfig:
             raise ValueError(f"tta_mode must be one of {TTA_MODES}: {self.tta_mode!r}")
         if not 0 <= self.num_workers <= MAX_WORKERS:
             raise ValueError(f"num_workers must be in [0, {MAX_WORKERS}] (RAM safety, D17): {self.num_workers}")
+        if self.domains not in DOMAIN_SETS:
+            raise ValueError(f"domains must be one of {DOMAIN_SETS}: {self.domains!r}")
+        if self.domains == "heldout" and self.dataset not in HELDOUT_DATASETS:
+            raise ValueError(f"{self.dataset} has no held-out domains; held-out sets exist for {HELDOUT_DATASETS}")
         if self.seed < 0 or (self.n_per_domain is not None and self.n_per_domain <= 0):
             raise ValueError("seed must be >= 0 and n_per_domain > 0")
         if self.resolved_batch_size is None:
@@ -84,11 +93,14 @@ class RunConfig:
         return self.name or self.method
 
     def run_id(self, machine: str) -> str:
-        """e.g. pc2_C10_Ramen_b64_s0, or pc2_C10_Ramen_b64_s0_n200 for a subset."""
+        """e.g. pc2_C10_Ramen_b64_s0, pc2_C10_Ramen_b64_s0_n200 for a subset, pc2_C10_Ramen_b64_s0_heldout."""
         subset = f"_n{self.n_per_domain}" if self.n_per_domain else ""
-        return f"{machine}_{self.spec.short}_{self.variant}_b{self.resolved_batch_size}_s{self.seed}{subset}"
+        heldout = "_heldout" if self.domains == "heldout" else ""
+        return f"{machine}_{self.spec.short}_{self.variant}_b{self.resolved_batch_size}_s{self.seed}{subset}{heldout}"
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
         d.update(overrides=dict(self.overrides), batch_size=self.resolved_batch_size, backbone=self.resolved_backbone)
+        if self.domains == "main":
+            del d["domains"]  # main runs keep the config dict of runs made before `domains` existed (Runner skip check)
         return d

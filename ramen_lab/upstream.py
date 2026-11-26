@@ -25,6 +25,7 @@ if str(SRC) not in sys.path:
 
 import datasets as _datasets  # noqa: E402  (upstream src/datasets)
 import methods as _methods  # noqa: E402  (upstream src/methods)
+from datasets.corruption import utils as _corruption_utils  # noqa: E402  (upstream src/datasets/corruption/utils.py)
 from methods import losses as _losses  # noqa: E402  (upstream src/methods/losses.py)
 from models import ModelForBySampleTTA as _by_sample  # noqa: E402  (upstream src/models/ModelForBySampleTTA.py)
 from models import get_pretrained_model as _models  # noqa: E402  (upstream src/models)
@@ -36,7 +37,7 @@ def _check_is_upstream(module: ModuleType) -> None:
         raise ImportError(f"{module.__name__} resolved to {origin}, not to upstream {SRC}: a package name clash")
 
 
-for _module in (_datasets, _methods, _losses, _by_sample, _models):
+for _module in (_datasets, _methods, _losses, _by_sample, _models, _corruption_utils):
     _check_is_upstream(_module)
 
 softmax_entropy = _losses.softmax_entropy  # upstream's entropy (Ramen's loss and memory weight)
@@ -101,9 +102,22 @@ def load_model(backbone: str, device: torch.device) -> Tuple[torch.nn.Module, An
     return _models.get_pretrained_model(SimpleNamespace(model=backbone, device=device))
 
 
-def load_datasets(name: str, root: str, transform: Any) -> Any:
-    """Upstream multi-domain dataset: .datasets (one per domain), .environments, .classes, .num_classes."""
-    return _datasets.get_dataset_class(name)(root=str(Path(root).expanduser()), transform=transform)
+def load_datasets(name: str, root: str, transform: Any, domains: str = "main") -> Any:
+    """Upstream multi-domain dataset: .datasets (one per domain), .environments, .classes, .num_classes.
+    domains="heldout": upstream's extra=True set (main + extra corruptions), cut down to the extra corruptions only."""
+    cls = _datasets.get_dataset_class(name)
+    root = str(Path(root).expanduser())
+    if domains == "main":
+        return cls(root=root, transform=transform)
+    if domains != "heldout":
+        raise ValueError(f"unknown domain set {domains!r}")
+    data = cls(root=root, transform=transform, extra=True)
+    keep = [i for i, env in enumerate(data.environments) if env in _corruption_utils.extra_corruptions]
+    if not keep:
+        raise ValueError(f"{name}: no extra corruptions found in {data.environments}")
+    data.environments = [data.environments[i] for i in keep]
+    data.datasets = [data.datasets[i] for i in keep]  # the main corruptions' arrays are freed with their datasets
+    return data
 
 
 def load_method_config(dataset: str, algo: str) -> Dict[str, Any]:

@@ -62,7 +62,7 @@ class Runner:
         """A fresh model, the datasets and the method for this config (nothing is shared between runs)."""
         self.adapter.seed_everything(config.seed)
         model, preprocess = self.adapter.load_model(config.resolved_backbone, self.device)
-        datasets = self.adapter.load_datasets(config.dataset, config.data_root, preprocess)
+        datasets = self.adapter.load_datasets(config.dataset, config.data_root, preprocess, domains=config.domains)
         method_cfg = self.method_config(config)
         args = self.adapter.method_args(method_cfg, self.device, config.resolved_batch_size)
         method = self.methods.get(config.method)(model, datasets, args)
