@@ -224,7 +224,8 @@ class RamenStoredValue(torch.nn.Module):
             total += (self.pool.values[found] * w.unsqueeze(dim=2)).sum(dim=1)
             n_queues += 1
             push_mass.scatter_add_(1, self.push_of_row[found], w.float() * self.norm_of_row[found])
-        stats = {"self_share": self_w / ramen_w.clamp_min(1e-30), "push_mass": push_mass}
+        stats = {"self_share": self_w / ramen_w.clamp_min(1e-30), "push_mass": push_mass,
+                 "weight_mass": ramen_w}  # total retrieval weight over Ramen's top-k sets (not logged here)
         return total / n_queues, stats
 
     def adapt_and_predict(self, x: Tensor) -> Tensor:

@@ -24,3 +24,4 @@ from ramen_lab.methods import oracle_fill  # noqa: E402,F401  (registers RamenFi
 from ramen_lab.methods import multi_cache  # noqa: E402,F401  (registers RamenMultiCache, ORACLE)
 from ramen_lab.methods import stored_value  # noqa: E402,F401  (registers RamenStoredValue, RamenStoredValueOracle)
 from ramen_lab.methods import grad_mix  # noqa: E402,F401  (registers RamenGradMix)
+from ramen_lab.methods import step_probe  # noqa: E402,F401  (registers RamenStepProbe)
