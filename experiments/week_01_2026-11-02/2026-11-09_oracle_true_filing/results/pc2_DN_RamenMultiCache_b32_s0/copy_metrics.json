@@ -1,0 +1,48 @@
+{
+  "run_id": "pc2_DN_RamenMultiCache_b32_s0",
+  "source": "multicache.npz",
+  "copies": {
+    "zero_shot": {
+      "acc": 57.1417,
+      "acc_micro": 54.6,
+      "per_domain": {
+        "clipart": 70.0077,
+        "infograph": 45.42,
+        "painting": 65.9729,
+        "quickdraw": 17.6406,
+        "real": 82.4692,
+        "sketch": 61.3398
+      },
+      "n_samples": 586575,
+      "n_correct": 320270
+    },
+    "true_label": {
+      "acc": 55.6484,
+      "acc_micro": 52.4071,
+      "per_domain": {
+        "clipart": 69.2763,
+        "infograph": 45.0499,
+        "painting": 65.9107,
+        "quickdraw": 11.0545,
+        "real": 82.3946,
+        "sketch": 60.2043
+      },
+      "n_samples": 586575,
+      "n_correct": 307407
+    },
+    "zero_shot_init": {
+      "acc": 55.7211,
+      "acc_micro": 52.8715,
+      "per_domain": {
+        "clipart": 68.9231,
+        "infograph": 44.4589,
+        "painting": 64.9199,
+        "quickdraw": 13.3362,
+        "real": 82.3148,
+        "sketch": 60.3735
+      },
+      "n_samples": 586575,
+      "n_correct": 310131
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "run_id": "pc2_DN_RamenMultiCache_b32_s0",
+  "date": "2026-11-10",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_01_2026-11-02/2026-11-09_oracle_true_filing/oracle_true_filing.py",
+  "config": {
+    "dataset": "DomainNet",
+    "method": "RamenMultiCache",
+    "seed": 0,
+    "name": null,
+    "batch_size": 32,
+    "backbone": "clip_vitbase32",
+    "overrides": {
+      "beta": 5.0,
+      "filing_seed": 0,
+      "filings": [
+        "zero_shot",
+        "true_label"
+      ],
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-09_oracle_true_filing/results/pc2_DN_RamenMultiCache_b32_s0/multicache.npz",
+      "lr": 0.01,
+      "max_capacity": 300,
+      "n_examples": 48,
+      "optimizer": "signsgd",
+      "pool_capacity": 128864,
+      "snapshot_at": [
+        146643,
+        293287,
+        439931
+      ],
+      "topk": 10
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "filing_seed": 0,
+      "filings": [
+        "zero_shot",
+        "true_label"
+      ],
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_01_2026-11-02/2026-11-09_oracle_true_filing/results/pc2_DN_RamenMultiCache_b32_s0/multicache.npz",
+      "lr": 0.01,
+      "max_capacity": 300,
+      "n_examples": 48,
+      "optimizer": "signsgd",
+      "pool_capacity": 128864,
+      "snapshot_at": [
+        146643,
+        293287,
+        439931
+      ],
+      "topk": 10
+    }
+  },
+  "metrics": {
+    "acc": 57.1417,
+    "acc_micro": 54.6,
+    "per_domain": {
+      "clipart": 70.0077,
+      "infograph": 45.42,
+      "painting": 65.9729,
+      "quickdraw": 17.6406,
+      "real": 82.4692,
+      "sketch": 61.3398
+    },
+    "n_samples": 586575,
+    "n_correct": 320270
+  },
+  "baseline_run_id": "pc2_DN_Ramen_b32_s0",
+  "raw_outputs": [
+    "experiments/week_01_2026-11-02/2026-11-09_oracle_true_filing/results/pc2_DN_RamenMultiCache_b32_s0/records.npz"
+  ],
+  "notes": "ORACLE: copies zero_shot (= Ramen, these records), true_label, random; per-copy outputs in multicache.npz",
+  "resources": {
+    "peak_ram_gb": 4.66,
+    "ram_budget_gb": 10.0,
+    "min_system_available_gb": 116.4,
+    "peak_gpu_allocated_gb": 10.58,
+    "peak_gpu_reserved_gb": 10.69,
+    "minutes": 84.12
+  }
+}

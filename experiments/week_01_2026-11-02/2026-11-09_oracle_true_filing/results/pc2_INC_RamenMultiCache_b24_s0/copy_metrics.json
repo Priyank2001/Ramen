@@ -1,0 +1,98 @@
+{
+  "run_id": "pc2_INC_RamenMultiCache_b24_s0",
+  "source": "multicache.npz",
+  "copies": {
+    "zero_shot": {
+      "acc": 33.0973,
+      "acc_micro": 33.0973,
+      "per_domain": {
+        "gaussian_noise": 21.88,
+        "shot_noise": 23.0,
+        "impulse_noise": 23.3,
+        "defocus_blur": 28.5,
+        "glass_blur": 24.38,
+        "motion_blur": 32.94,
+        "zoom_blur": 29.68,
+        "snow": 37.66,
+        "frost": 35.14,
+        "fog": 44.44,
+        "brightness": 58.12,
+        "contrast": 29.44,
+        "elastic_transform": 24.04,
+        "pixelate": 42.34,
+        "jpeg_compression": 41.6
+      },
+      "n_samples": 75000,
+      "n_correct": 24823
+    },
+    "true_label": {
+      "acc": 32.3,
+      "acc_micro": 32.3,
+      "per_domain": {
+        "gaussian_noise": 21.64,
+        "shot_noise": 24.46,
+        "impulse_noise": 22.0,
+        "defocus_blur": 27.94,
+        "glass_blur": 23.76,
+        "motion_blur": 32.66,
+        "zoom_blur": 28.9,
+        "snow": 36.28,
+        "frost": 32.22,
+        "fog": 42.46,
+        "brightness": 58.32,
+        "contrast": 29.58,
+        "elastic_transform": 21.5,
+        "pixelate": 41.54,
+        "jpeg_compression": 41.24
+      },
+      "n_samples": 75000,
+      "n_correct": 24225
+    },
+    "random": {
+      "acc": 32.34,
+      "acc_micro": 32.34,
+      "per_domain": {
+        "gaussian_noise": 19.74,
+        "shot_noise": 22.1,
+        "impulse_noise": 20.12,
+        "defocus_blur": 29.46,
+        "glass_blur": 23.94,
+        "motion_blur": 33.2,
+        "zoom_blur": 29.12,
+        "snow": 37.62,
+        "frost": 33.5,
+        "fog": 43.44,
+        "brightness": 58.44,
+        "contrast": 29.56,
+        "elastic_transform": 20.72,
+        "pixelate": 42.12,
+        "jpeg_compression": 42.02
+      },
+      "n_samples": 75000,
+      "n_correct": 24255
+    },
+    "zero_shot_init": {
+      "acc": 27.2773,
+      "acc_micro": 27.2773,
+      "per_domain": {
+        "gaussian_noise": 14.98,
+        "shot_noise": 16.86,
+        "impulse_noise": 15.38,
+        "defocus_blur": 25.7,
+        "glass_blur": 16.86,
+        "motion_blur": 26.94,
+        "zoom_blur": 24.54,
+        "snow": 33.98,
+        "frost": 32.96,
+        "fog": 39.1,
+        "brightness": 57.28,
+        "contrast": 19.12,
+        "elastic_transform": 14.72,
+        "pixelate": 35.48,
+        "jpeg_compression": 35.26
+      },
+      "n_samples": 75000,
+      "n_correct": 20458
+    }
+  }
+}
