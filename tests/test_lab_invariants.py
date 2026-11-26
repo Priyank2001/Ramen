@@ -35,7 +35,8 @@ CLASSES = ["cat", "dog", "car", "tree", "house"]
 DEVICE = torch.device("cuda")
 SMALL_RAMEN = {"max_capacity": 20, "topk": 5, "beta": 5.0, "optimizer": "signsgd", "lr": 0.01}
 TEST_CONFIGS = {"NoAdapt": upstream.load_method_config("CIFAR10C", "NoAdapt"),
-                "Tent": upstream.load_method_config("CIFAR10C", "Tent"), "Ramen": SMALL_RAMEN}
+                "Tent": upstream.load_method_config("CIFAR10C", "Tent"), "Ramen": SMALL_RAMEN,
+                "RamenMultiCache": SMALL_RAMEN},  # not a Ramen subclass (builds its own memories), same small config
 
 
 def test_config_for(name: str) -> dict:
