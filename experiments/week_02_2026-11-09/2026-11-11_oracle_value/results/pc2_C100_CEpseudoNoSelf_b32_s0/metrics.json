@@ -1,0 +1,78 @@
+{
+  "run_id": "pc2_C100_CEpseudoNoSelf_b32_s0",
+  "date": "2026-11-11",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_02_2026-11-09/2026-11-11_oracle_value/oracle_value.py",
+  "config": {
+    "dataset": "CIFAR100C",
+    "method": "RamenStoredValue",
+    "seed": 0,
+    "name": "CEpseudoNoSelf",
+    "batch_size": 32,
+    "backbone": "clip_vitbase16",
+    "overrides": {
+      "beta": 5.0,
+      "exclude_self": true,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_C100_CEpseudoNoSelf_b32_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 750,
+      "optimizer": "signsgd",
+      "stored_value": "ce_pseudo",
+      "topk": 5
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "exclude_self": true,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_C100_CEpseudoNoSelf_b32_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 750,
+      "optimizer": "signsgd",
+      "stored_value": "ce_pseudo",
+      "topk": 5
+    }
+  },
+  "metrics": {
+    "acc": 45.2353,
+    "acc_micro": 45.2353,
+    "per_domain": {
+      "gaussian_noise": 31.73,
+      "shot_noise": 34.17,
+      "impulse_noise": 43.99,
+      "defocus_blur": 51.11,
+      "glass_blur": 28.92,
+      "motion_blur": 49.76,
+      "zoom_blur": 53.59,
+      "snow": 53.25,
+      "frost": 51.76,
+      "fog": 50.99,
+      "brightness": 64.58,
+      "contrast": 51.7,
+      "elastic_transform": 36.07,
+      "pixelate": 40.31,
+      "jpeg_compression": 36.6
+    },
+    "n_samples": 150000,
+    "n_correct": 67853
+  },
+  "baseline_run_id": "pc2_C100_Ramen_b32_s0",
+  "raw_outputs": [
+    "experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_C100_CEpseudoNoSelf_b32_s0/records.npz"
+  ],
+  "notes": "label-free",
+  "resources": {
+    "peak_ram_gb": 7.22,
+    "ram_budget_gb": 13.0,
+    "min_system_available_gb": 113.6,
+    "peak_gpu_allocated_gb": 8.17,
+    "peak_gpu_reserved_gb": 8.49,
+    "minutes": 13.75
+  }
+}

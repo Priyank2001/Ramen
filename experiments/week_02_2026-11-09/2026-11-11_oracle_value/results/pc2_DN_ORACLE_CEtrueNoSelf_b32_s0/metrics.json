@@ -1,0 +1,71 @@
+{
+  "run_id": "pc2_DN_ORACLE_CEtrueNoSelf_b32_s0",
+  "date": "2026-11-12",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_02_2026-11-09/2026-11-11_oracle_value/oracle_value.py",
+  "config": {
+    "dataset": "DomainNet",
+    "method": "RamenStoredValueOracle",
+    "seed": 0,
+    "name": "ORACLE_CEtrueNoSelf",
+    "batch_size": 32,
+    "backbone": "clip_vitbase32",
+    "overrides": {
+      "beta": 5.0,
+      "exclude_self": true,
+      "filing": "true_label",
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_DN_ORACLE_CEtrueNoSelf_b32_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 300,
+      "optimizer": "signsgd",
+      "stored_value": "ce_true",
+      "topk": 10
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "exclude_self": true,
+      "filing": "true_label",
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_DN_ORACLE_CEtrueNoSelf_b32_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 300,
+      "optimizer": "signsgd",
+      "stored_value": "ce_true",
+      "topk": 10
+    }
+  },
+  "metrics": {
+    "acc": 56.7621,
+    "acc_micro": 54.326,
+    "per_domain": {
+      "clipart": 69.6108,
+      "infograph": 44.9453,
+      "painting": 65.5149,
+      "quickdraw": 17.2046,
+      "real": 82.7253,
+      "sketch": 60.5717
+    },
+    "n_samples": 586575,
+    "n_correct": 318663
+  },
+  "baseline_run_id": "pc2_DN_Ramen_b32_s0",
+  "raw_outputs": [
+    "experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_DN_ORACLE_CEtrueNoSelf_b32_s0/records.npz"
+  ],
+  "notes": "ORACLE (reads labels for the stored value / filing)",
+  "resources": {
+    "peak_ram_gb": 6.06,
+    "ram_budget_gb": 10.0,
+    "min_system_available_gb": 117.1,
+    "peak_gpu_allocated_gb": 8.6,
+    "peak_gpu_reserved_gb": 8.69,
+    "minutes": 71.53
+  }
+}

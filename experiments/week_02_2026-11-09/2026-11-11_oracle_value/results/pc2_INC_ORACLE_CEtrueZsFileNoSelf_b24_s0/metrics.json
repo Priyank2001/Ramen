@@ -1,0 +1,78 @@
+{
+  "run_id": "pc2_INC_ORACLE_CEtrueZsFileNoSelf_b24_s0",
+  "date": "2026-11-12",
+  "machine": "pc2",
+  "gpu": "RTX 3080 Ti",
+  "git_hash": "c7afdb8",
+  "git_dirty": true,
+  "backfilled": false,
+  "script": "experiments/week_02_2026-11-09/2026-11-11_oracle_value/oracle_value.py",
+  "config": {
+    "dataset": "ImageNetC5K",
+    "method": "RamenStoredValueOracle",
+    "seed": 0,
+    "name": "ORACLE_CEtrueZsFileNoSelf",
+    "batch_size": 24,
+    "backbone": "clip_vitbase16",
+    "overrides": {
+      "beta": 0.0,
+      "exclude_self": true,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_INC_ORACLE_CEtrueZsFileNoSelf_b24_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 75,
+      "optimizer": "signsgd",
+      "stored_value": "ce_true",
+      "topk": 1
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 0.0,
+      "exclude_self": true,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_INC_ORACLE_CEtrueZsFileNoSelf_b24_s0/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 75,
+      "optimizer": "signsgd",
+      "stored_value": "ce_true",
+      "topk": 1
+    }
+  },
+  "metrics": {
+    "acc": 34.3467,
+    "acc_micro": 34.3467,
+    "per_domain": {
+      "gaussian_noise": 21.56,
+      "shot_noise": 23.36,
+      "impulse_noise": 24.26,
+      "defocus_blur": 28.22,
+      "glass_blur": 26.62,
+      "motion_blur": 34.48,
+      "zoom_blur": 31.28,
+      "snow": 39.5,
+      "frost": 38.5,
+      "fog": 45.1,
+      "brightness": 59.28,
+      "contrast": 28.9,
+      "elastic_transform": 27.56,
+      "pixelate": 43.74,
+      "jpeg_compression": 42.84
+    },
+    "n_samples": 75000,
+    "n_correct": 25760
+  },
+  "baseline_run_id": "pc2_INC_Ramen_b24_s0",
+  "raw_outputs": [
+    "experiments/week_02_2026-11-09/2026-11-11_oracle_value/results/pc2_INC_ORACLE_CEtrueZsFileNoSelf_b24_s0/records.npz"
+  ],
+  "notes": "ORACLE (reads labels for the stored value / filing)",
+  "resources": {
+    "peak_ram_gb": 3.36,
+    "ram_budget_gb": 10.0,
+    "min_system_available_gb": 119.8,
+    "peak_gpu_allocated_gb": 7.6,
+    "peak_gpu_reserved_gb": 7.78,
+    "minutes": 29.45
+  }
+}
