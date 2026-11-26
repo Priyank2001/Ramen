@@ -1,0 +1,68 @@
+{
+  "run_id": "pc2_C10_GradMixUnit90_b100_s0_heldout",
+  "date": "2026-11-27",
+  "machine": "pc2",
+  "gpu": "RTX 2080 Ti",
+  "git_hash": "fe9a507",
+  "git_dirty": false,
+  "backfilled": false,
+  "script": "experiments/week_04_2026-11-23/2026-11-27_grad_mix/grad_mix.py",
+  "config": {
+    "dataset": "CIFAR10C",
+    "method": "RamenGradMix",
+    "seed": 0,
+    "name": "GradMixUnit90",
+    "batch_size": 100,
+    "backbone": "clip_vitbase32",
+    "overrides": {
+      "beta": 5.0,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0_heldout/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "mix_lambda": 0.9,
+      "mix_norm": "unit",
+      "optimizer": "signsgd",
+      "topk": 50
+    },
+    "tta_mode": "mixed",
+    "n_per_domain": null,
+    "domains": "heldout",
+    "num_workers": 4,
+    "data_root": "~/data",
+    "method_config": {
+      "beta": 5.0,
+      "log_path": "/home/narendra/priyank/Projects/Ramen/experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0_heldout/stored_value.npz",
+      "lr": 0.01,
+      "max_capacity": 7500,
+      "mix_lambda": 0.9,
+      "mix_norm": "unit",
+      "optimizer": "signsgd",
+      "topk": 50
+    }
+  },
+  "metrics": {
+    "acc": 78.505,
+    "acc_micro": 78.505,
+    "per_domain": {
+      "speckle_noise": 64.17,
+      "gaussian_blur": 78.61,
+      "spatter": 84.22,
+      "saturate": 87.02
+    },
+    "n_samples": 40000,
+    "n_correct": 31402
+  },
+  "baseline_run_id": "pc2_C10_GradMix100_b100_s0_heldout",
+  "raw_outputs": [
+    "experiments/week_04_2026-11-23/2026-11-27_grad_mix/results/pc2_C10_GradMixUnit90_b100_s0_heldout/records.npz"
+  ],
+  "notes": "label-free; lambda=0.9, mix=unit",
+  "resources": {
+    "peak_ram_gb": 5.32,
+    "ram_budget_gb": 10.0,
+    "min_system_available_gb": 109.0,
+    "peak_gpu_allocated_gb": 7.77,
+    "peak_gpu_reserved_gb": 9.45,
+    "minutes": 1.73
+  }
+}
